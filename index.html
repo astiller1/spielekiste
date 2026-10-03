@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Sechs Browserspiele für Kinder: Rechnen, Anfangslaute, Angeln, Geschichten und Fahrrad-Schrauben.">
+<meta name="description" content="Sieben Browserspiele für Kinder: Rechnen, Anfangslaute, Knobeln, Angeln, Geschichten und Fahrrad-Schrauben.">
 <meta name="theme-color" content="#e4f1f6">
 <title>Spielekiste</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,6 +65,7 @@ header p{margin:0; color:var(--muted); max-width:52ch; font-size:1.1rem}
 .g-katzen{--c-bg:#2a2152; --c-ink:#fff6e6; --c-soft:#d9cdf2; --c-btn:#ff8fb3; --c-btn-ink:#2a2152}
 .g-leo{--c-bg:#0a2c4e; --c-ink:#fff7e3; --c-soft:#bfe3f7; --c-btn:#ffc93c; --c-btn-ink:#0a2c4e}
 .g-insel{--c-bg:#fffdf7; --c-ink:#33302b; --c-soft:#5d6b67; --c-btn:#f07a2a; --c-btn-ink:#ffffff}
+.g-zauberwald{--c-bg:#1f3b2c; --c-ink:#e7f3e0; --c-soft:#bcd6c3; --c-btn:#ffc23c; --c-btn-ink:#1f3b2c}
 .g-speiche{--c-bg:#18211d; --c-ink:#eef3ec; --c-soft:#b9c6bd; --c-btn:#ffcf24; --c-btn-ink:#18211d}
 .g-traumrad{--c-bg:#e7ecee; --c-ink:#14212b; --c-soft:#46566a; --c-btn:#0d7a76; --c-btn-ink:#ffffff}
 
@@ -96,7 +97,7 @@ footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
 <div class="wrap">
   <header>
     <h1>Spiele<span>kiste</span></h1>
-    <p>Sechs Browserspiele zum Rechnen, Lesen, Angeln und Schrauben. Läuft direkt im Browser, auf Tablet, Handy und Computer. Keine Anmeldung, keine Werbung.</p>
+    <p>Sieben Browserspiele zum Rechnen, Lesen, Knobeln, Angeln und Schrauben. Läuft direkt im Browser, auf Tablet, Handy und Computer. Keine Anmeldung, keine Werbung.</p>
   </header>
 
   <main class="grid">
@@ -211,6 +212,35 @@ footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
         <p>Ein Sturm hat Fritzis Insel leergefegt. Hör genau hin, finde den Anfangslaut von Apfel, Boot oder Igel, und Stück für Stück kehrt alles zurück. Mit echter Sprecherstimme.</p>
         <ul class="tags"><li>Anfangslaute</li><li>Lesen lernen</li><li>Ton an</li></ul>
         <a class="play" href="spiele/wort-insel/index.html">Spielen</a>
+      </div>
+    </article>
+
+    <article class="game g-zauberwald">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Ein Glas voller Glühwürmchen im Wald, daneben eine Rätselreihe mit Pilz, Blume, Pilz und Fragezeichen">
+        <defs><linearGradient id="wald" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7edd3"/><stop offset="1" stop-color="#a9d3a6"/></linearGradient></defs>
+        <rect width="320" height="160" fill="url(#wald)"/>
+        <path d="M0 160 V112 L18 84 L34 112 L52 70 L70 112 L86 92 L104 124 L122 80 L140 120 L160 96 L178 126 L200 84 L222 122 L240 92 L262 128 L282 78 L302 118 L320 96 V160 Z" fill="#2e5e3e" opacity=".55"/>
+        <g transform="translate(34 30)">
+          <ellipse cx="30" cy="52" rx="34" ry="36" fill="#ffc23c" opacity=".35"/>
+          <rect x="16" y="0" width="28" height="9" rx="3" fill="#3e7a4f"/>
+          <path d="M18 9 h24 v5 q12 5 12 19 v38 q0 7 -7 7 h-34 q-7 0 -7 -7 v-38 q0 -14 12 -19 z" fill="#ffffff" fill-opacity=".45" stroke="#1f3b2c" stroke-width="3"/>
+          <g fill="#ffc23c" class="blink"><circle cx="20" cy="36" r="3.2"/><circle cx="36" cy="30" r="3.2"/><circle cx="28" cy="50" r="3.2"/><circle cx="42" cy="58" r="3.2"/><circle cx="16" cy="62" r="3.2"/><circle cx="40" cy="44" r="3.2"/></g>
+        </g>
+        <g transform="translate(118 34)">
+          <rect x="0" y="0" width="190" height="60" rx="18" fill="#f3faee"/>
+          <g font-size="28" text-anchor="middle" font-family="sans-serif">
+            <text x="30" y="40">🍄</text><text x="72" y="40">🌸</text><text x="114" y="40">🍄</text>
+          </g>
+          <circle cx="158" cy="30" r="18" fill="none" stroke="#8e77d1" stroke-width="3.5" stroke-dasharray="6 5"/>
+          <text x="158" y="40" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="24" fill="#8e77d1">?</text>
+        </g>
+        <g class="bob" font-size="26" font-family="sans-serif"><text x="150" y="134">🦔</text><text x="196" y="138">🦉</text><text x="240" y="134">🦊</text></g>
+      </svg>
+      <div class="info">
+        <h2>Zauberwald</h2>
+        <p>Wie geht die Reihe weiter? Welcher Schatten gehört dazu? Jede richtige Antwort bringt ein Glühwürmchen ins Glas, und alle zehn Glühwürmchen zieht ein neuer Waldfreund ein.</p>
+        <ul class="tags"><li>Knobeln</li><li>Muster und Zählen</li><li>Bis zu 3 Kinder</li></ul>
+        <a class="play" href="spiele/zauberwald.html">Spielen</a>
       </div>
     </article>
 
