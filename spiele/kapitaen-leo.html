@@ -335,8 +335,40 @@ const sfx = {
 let deVoice = null;
 function pickVoice() { try { deVoice = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('de')) || null; } catch (e) {} }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
+/* Sprachaufnahmen (ElevenLabs, Stimme "Will") aus leo-audio/, sonst die Stimme des Browsers */
+const vkey = t => { let h = 0x811c9dc5; for (const ch of t) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return 'v' + h.toString(16).padStart(8, '0'); };
+let clips = null, voiceSrc = null, voiceEnd = 0, voiceSeq = 0;
+const clipBufs = {};
+fetch('leo-audio/manifest.json').then(r => r.ok ? r.json() : null).then(a => { if (Array.isArray(a)) clips = new Set(a); }).catch(() => {});
+function clipBuf(k) {
+  if (!clipBufs[k]) {
+    clipBufs[k] = fetch('leo-audio/' + k + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(ab => new Promise((res, rej) => AC.decodeAudioData(ab, res, rej)));
+    clipBufs[k].catch(() => { delete clipBufs[k]; });
+  }
+  return clipBufs[k];
+}
+function stopVoice() { voiceSeq++; if (voiceSrc) { try { voiceSrc.stop(); } catch (e) {} voiceSrc = null; } voiceEnd = 0; }
+function playClip(text, interrupt) {
+  const k = vkey(text);
+  if (!AC || !clips || !clips.has(k)) return false;
+  if (interrupt) { stopVoice(); try { speechSynthesis.cancel(); } catch (e) {} }
+  const my = voiceSeq;
+  clipBuf(k).then(buf => {
+    if (my !== voiceSeq || !soundOn) return;
+    const s = AC.createBufferSource(); s.buffer = buf; s.connect(AC.destination);
+    const at = Math.max(AC.currentTime, voiceEnd);
+    s.start(at); voiceEnd = at + buf.duration; voiceSrc = s;
+  }).catch(() => { if (my === voiceSeq) speakTTS(text, false); });
+  return true;
+}
 function say(text, interrupt = true) {
-  if (!soundOn || !('speechSynthesis' in window)) return;
+  if (!soundOn) return;
+  if (playClip(text, interrupt)) return;
+  speakTTS(text, interrupt);
+}
+function speakTTS(text, interrupt) {
+  if (!('speechSynthesis' in window)) return;
   try {
     if (interrupt) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -873,7 +905,7 @@ function update(dt) {
         } else {
           sell.active = false;
           const e = sell.earned;
-          setTimeout(() => say(e === 1 ? 'Du hast eine Münze verdient!' : `Du hast ${e} Münzen verdient!`), 600);
+          setTimeout(() => say(e === 1 ? 'Du hast eine Münze verdient!' : e > 30 ? 'Du hast ganz viele Münzen verdient!' : `Du hast ${e} Münzen verdient!`), 600);
           const o = save.order;
           if (o && !o.paid && o.have >= o.need) { o.paid = true; persist(); setTimeout(payOrder, 2600); }
         }
@@ -1026,7 +1058,7 @@ function announceOrder() {
   if (!o || o.paid) { say('Oma Grete freut sich!'); return; }
   const left = o.need - o.have, ft = FT[o.t];
   if (!o.have) say(`Oma Grete wünscht sich ${o.need} ${ft.pl}!`);
-  else say(`Oma Grete braucht noch ${left === 1 ? ft.ein.replace(/^E/, 'e') : left + ' ' + ft.pl}.`);
+  else say(`Oma Grete braucht noch ${left === 1 ? ft.ein.replace(/^Ein /, 'einen ').replace(/^Eine /, 'eine ') : left + ' ' + ft.pl}.`);
 }
 function payOrder() {
   const o = save.order; if (!o) return;
@@ -1709,7 +1741,7 @@ function buyGolden(card) {
   if (!lineMax()) { sfx.nope(); shakeCard(card); say('Dafür brauchst du zuerst die längste Angel.'); return; }
   if (save.coins < GOLD_PRICE) {
     sfx.nope(); shakeCard(card); const miss = GOLD_PRICE - save.coins;
-    say(miss === 1 ? 'Dafür brauchst du noch eine Münze.' : `Dafür brauchst du noch ${miss} Münzen.`); return;
+    say(miss === 1 ? 'Dafür brauchst du noch eine Münze.' : miss > 20 ? 'Dafür brauchst du noch mehr Münzen.' : `Dafür brauchst du noch ${miss} Münzen.`); return;
   }
   save.coins -= GOLD_PRICE; dispCoins = save.coins; save.golden = true; persist(); ensureBoss();
   sfx.buy(); say('Super! Jetzt fahr raus und tippe ganz unten auf Käpt\'n Glubsch!');
@@ -1816,7 +1848,7 @@ function buy(key, card) {
   if (save.coins < p) {
     sfx.nope(); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
     const miss = p - save.coins;
-    say(miss === 1 ? 'Dafür brauchst du noch eine Münze.' : `Dafür brauchst du noch ${miss} Münzen.`);
+    say(miss === 1 ? 'Dafür brauchst du noch eine Münze.' : miss > 20 ? 'Dafür brauchst du noch mehr Münzen.' : `Dafür brauchst du noch ${miss} Münzen.`);
     return;
   }
   save.coins -= p; dispCoins = save.coins; save.lv[key]++;
@@ -1855,11 +1887,12 @@ const SPK_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="#173451" stroke-wi
 function renderSound() { const b = $('#soundBtn'); b.innerHTML = soundOn ? SPK_ON : SPK_OFF; b.setAttribute('aria-label', soundOn ? 'Ton aus' : 'Ton an'); }
 $('#soundBtn').addEventListener('click', () => {
   soundOn = !soundOn; renderSound(); ensureAudio();
-  if (!soundOn) { try { speechSynthesis.cancel(); } catch (e) {} }
+  if (!soundOn) { stopVoice(); try { speechSynthesis.cancel(); } catch (e) {} }
   try { localStorage.setItem(KEY + '-sound', soundOn ? '1' : '0'); } catch (e) {}
 });
 function startGame() {
   ensureAudio(); $('#start').hidden = true; sfx.buy();
+  if (AC && clips) [...clips].forEach((k, i) => setTimeout(() => clipBuf(k).catch(() => {}), 300 + i * 40));
   say(save.caught ? 'Willkommen zurück, Kapitän Leo!' : 'Ahoi Kapitän Leo! Tippe auf einen Fisch.');
   setTimeout(() => { if (G.boss && G.boss.st === 'wait') say('Käpt\'n Glubsch wartet ganz unten auf dich!', false); else announceOrder(); }, save.caught ? 2600 : 4200);
 }
