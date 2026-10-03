@@ -21,6 +21,8 @@ Live: https://astiller1.github.io/spielekiste/
 - **1.0** – Erste Veröffentlichung, Sprachaufnahmen mit ElevenLabs.
 
 ## Asteroiden-Abwehr (`asteroiden-…`)
+- **1.1** – Fehler behoben: Startbildschirm und „Schild leer!“ lagen übereinander, das Spiel ließ sich nicht
+  starten (auf GitHub fehlte die Regel, die versteckte Fenster ausblendet).
 - **1.0** – Erste Veröffentlichung.
 
 ## Speiche & Schrott (`speiche-…`)
