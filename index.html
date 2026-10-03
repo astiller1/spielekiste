@@ -58,6 +58,8 @@ header p{margin:0; color:var(--muted); max-width:52ch; font-size:1.1rem}
 .g-katzen{--c-bg:#2a2152; --c-ink:#fff6e6; --c-soft:#d9cdf2; --c-btn:#ff8fb3; --c-btn-ink:#2a2152}
 .g-leo{--c-bg:#0a2c4e; --c-ink:#fff7e3; --c-soft:#bfe3f7; --c-btn:#ffc93c; --c-btn-ink:#0a2c4e}
 .g-insel{--c-bg:#fffdf7; --c-ink:#33302b; --c-soft:#5d6b67; --c-btn:#f07a2a; --c-btn-ink:#ffffff}
+.g-speiche{--c-bg:#18211d; --c-ink:#eef3ec; --c-soft:#b9c6bd; --c-btn:#ffcf24; --c-btn-ink:#18211d}
+.g-traumrad{--c-bg:#e7ecee; --c-ink:#14212b; --c-soft:#46566a; --c-btn:#0d7a76; --c-btn-ink:#ffffff}
 
 footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
 
@@ -73,7 +75,7 @@ footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
 <div class="wrap">
   <header>
     <h1>Spiele<span>kiste</span></h1>
-    <p>Vier kleine Lernspiele für Kinder. Läuft direkt im Browser, auf Tablet, Handy und Computer. Keine Anmeldung, keine Werbung.</p>
+    <p>Sechs Browserspiele zum Rechnen, Lesen, Angeln und Schrauben. Läuft direkt im Browser, auf Tablet, Handy und Computer. Keine Anmeldung, keine Werbung.</p>
   </header>
 
   <main class="grid">
@@ -159,8 +161,8 @@ footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
       </svg>
       <div class="info">
         <h2>Kapitän Leo</h2>
-        <p>Raus aufs Meer mit dem kleinen Kutter. Fang Fische, verkauf sie im Hafen und bau in der Werft dein Boot immer größer aus.</p>
-        <ul class="tags"><li>Angeln</li><li>Münzen sparen</li><li>Tastatur oder Maus</li></ul>
+        <p>Raus aufs Meer mit dem kleinen Kutter. Fang Fische für Oma Grete, bau in der Werft dein Boot aus und lock am Ende Käpt'n Glubsch aus der Tiefe.</p>
+        <ul class="tags"><li>Angeln</li><li>Tag und Nacht</li><li>Tippen oder Tastatur</li></ul>
         <a class="play" href="spiele/kapitaen-leo.html">Spielen</a>
       </div>
     </article>
@@ -188,6 +190,72 @@ footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
         <p>Ein Sturm hat Fritzis Insel leergefegt. Hör genau hin, finde den Anfangslaut von Apfel, Boot oder Igel, und Stück für Stück kehrt alles zurück. Mit echter Sprecherstimme.</p>
         <ul class="tags"><li>Anfangslaute</li><li>Lesen lernen</li><li>Ton an</li></ul>
         <a class="play" href="spiele/wort-insel/index.html">Spielen</a>
+      </div>
+    </article>
+
+    <article class="game g-speiche">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Ein Fahrrad hängt an einer Lochwand in einer Hinterhofwerkstatt, daneben Schraubenschlüssel und der Mond">
+        <defs><pattern id="loch" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="1.6" fill="#2c3a33"/></pattern></defs>
+        <rect width="320" height="160" fill="#1f2a24"/>
+        <rect width="320" height="160" fill="url(#loch)"/>
+        <circle cx="282" cy="30" r="14" fill="#ffe8a8"/><circle cx="288" cy="26" r="12" fill="#1f2a24"/>
+        <g stroke="#b9c6bd" stroke-width="4" stroke-linecap="round" fill="none">
+          <path d="M26 30 v34 M18 30 h16"/><circle cx="26" cy="72" r="8"/>
+          <path d="M50 28 v40"/><path d="M44 28 h12 v8 h-12z"/>
+        </g>
+        <g class="bob">
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="120" cy="108" r="30" stroke="#0d0f0e" stroke-width="6"/>
+            <circle cx="216" cy="108" r="30" stroke="#0d0f0e" stroke-width="6"/>
+            <circle cx="120" cy="108" r="25" stroke="#5a6660" stroke-width="1.5"/>
+            <circle cx="216" cy="108" r="25" stroke="#5a6660" stroke-width="1.5"/>
+            <path d="M120 108 L160 110 L146 70 L200 72 L216 108 M160 110 L200 72" stroke="#d8432f" stroke-width="6"/>
+            <path d="M146 70 L142 58 M132 56 h20" stroke="#eef3ec" stroke-width="4"/>
+            <path d="M200 72 L204 58 L218 58" stroke="#eef3ec" stroke-width="4"/>
+            <circle cx="160" cy="110" r="7" stroke="#ffcf24" stroke-width="3"/>
+          </g>
+        </g>
+        <rect x="0" y="146" width="320" height="14" fill="#2c3a33"/>
+        <g font-family="Baloo 2, sans-serif" font-weight="800" font-size="13">
+          <rect x="248" y="96" width="62" height="40" rx="6" fill="#ffcf24"/>
+          <text x="279" y="113" text-anchor="middle" fill="#18211d">150 €</text>
+          <text x="279" y="129" text-anchor="middle" fill="#18211d">Ruf 12</text>
+        </g>
+      </svg>
+      <div class="info">
+        <h2>Speiche &amp; Schrott</h2>
+        <p>Deine eigene Fahrradwerkstatt im Hinterhof. Wühl bei Kalle im Schrott, bau Räder zusammen, freunde dich mit der Nachbarschaft an und hol dir bei Rennen den Pokal.</p>
+        <ul class="tags"><li>Werkstatt-Spiel</li><li>Tag und Nacht</li><li>Geheime Orte</li></ul>
+        <a class="play" href="spiele/speiche-und-schrott.html">Spielen</a>
+      </div>
+    </article>
+
+    <article class="game g-traumrad">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Technische Zeichnung eines Rennrads, eine Schieblehre misst 27,2 Millimeter">
+        <rect width="320" height="160" fill="#f6f8f8"/>
+        <g stroke="#c5d0d5" stroke-width="1"><path d="M0 40 H320 M0 80 H320 M0 120 H320 M80 0 V160 M160 0 V160 M240 0 V160"/></g>
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="70" cy="104" r="40" stroke="#0d7a76" stroke-width="3"/>
+          <circle cx="226" cy="104" r="40" stroke="#c5d0d5" stroke-width="3" stroke-dasharray="4 5"/>
+          <path d="M148 112 L132 48 L210 50 L148 112 Z M148 112 L70 104 L132 48 M210 50 L226 104" stroke="#14212b" stroke-width="3.5"/>
+          <path d="M132 48 L128 30 M114 28 h28" stroke="#c0392b" stroke-width="3"/>
+          <path d="M208 46 L206 30 L224 30" stroke="#0d7a76" stroke-width="3"/>
+        </g>
+        <g transform="translate(236 14)">
+          <rect x="0" y="0" width="76" height="12" rx="2" fill="#566673"/>
+          <rect x="4" y="12" width="8" height="26" fill="#566673"/>
+          <rect x="40" y="-4" width="20" height="44" rx="3" fill="#14212b" class="drift"/>
+          <rect x="6" y="46" width="66" height="22" rx="4" fill="#14212b"/>
+          <text x="39" y="62" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="15" fill="#5cc8c0">27,2 mm</text>
+        </g>
+        <text x="100" y="20" font-family="Baloo 2, sans-serif" font-weight="800" font-size="12" fill="#c0392b">passt nicht!</text>
+        <path d="M120 22 L127 30" stroke="#c0392b" stroke-width="2"/>
+      </svg>
+      <div class="info">
+        <h2>Werkbank: Das Traumrad</h2>
+        <p>Ein Stahlrenner von 1983 wartet auf seine Teile. Miss mit Schieblehre und Gewindelehre nach, zieh jede Schraube im grünen Bereich an und schaff die Probefahrt ohne Fehlfahrt.</p>
+        <ul class="tags"><li>Knobeln</li><li>Messen</li><li>Fahrradtechnik</li></ul>
+        <a class="play" href="spiele/traumrad.html">Spielen</a>
       </div>
     </article>
 

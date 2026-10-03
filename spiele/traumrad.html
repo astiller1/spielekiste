@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Werkbank: Das Traumrad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#e7ecee; --surface:#f6f8f8; --ink:#14212b; --muted:#566673; --line:#c5d0d5;
+  --accent:#0d7a76; --accent-ink:#ffffff; --accent-soft:#d3ebe8; --celeste:#5cc8c0;
+  --warn:#c0392b; --warn-soft:#f7dcd7; --ok:#217a45; --gold:#a97d12;
+  --shadow:0 1px 0 rgba(20,33,43,.08);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10181d; --surface:#18232a; --ink:#e4edf0; --muted:#8fa3ad; --line:#2c3b44;
+    --accent:#5cc8c0; --accent-ink:#0b1a19; --accent-soft:#1c3735; --celeste:#5cc8c0;
+    --warn:#ef7a69; --warn-soft:#3a2420; --ok:#6fd29a; --gold:#e0b84e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10181d; --surface:#18232a; --ink:#e4edf0; --muted:#8fa3ad; --line:#2c3b44;
+  --accent:#5cc8c0; --accent-ink:#0b1a19; --accent-soft:#1c3735; --celeste:#5cc8c0;
+  --warn:#ef7a69; --warn-soft:#3a2420; --ok:#6fd29a; --gold:#e0b84e;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--celeste);outline-offset:2px}
+.wrap{max-width:520px;margin:0 auto;padding:12px 14px 32px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+h1{font:700 28px/1 "Barlow Condensed",Barlow,sans-serif;letter-spacing:.01em;margin:0}
+.sub{color:var(--muted);font-size:14px;margin:4px 0 0}
+.stats{display:flex;gap:6px;flex:none}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px;text-align:center;min-width:58px}
+.stat b{display:block;font:700 20px/1.1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.bike{margin:10px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+.bike svg{display:block;width:100%;height:auto}
+.fr{stroke:var(--ink);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.pt{stroke:var(--line);stroke-width:3;fill:none;stroke-dasharray:4 5;stroke-linecap:round;transition:stroke .2s}
+.pt.on{stroke:var(--accent);stroke-dasharray:none}
+.pt.bad{stroke:var(--warn);stroke-dasharray:none}
+.pt.fillp{fill:var(--line)}
+.pt.on.fillp{fill:var(--accent)}
+.pt.bad.fillp{fill:var(--warn)}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.slot{min-height:58px;border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 6px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;line-height:1.15}
+.slot b{font:600 17px/1.1 "Barlow Condensed",sans-serif;letter-spacing:.01em}
+.slot small{font-size:12px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.slot.filled{background:var(--accent-soft)}
+.slot.filled small{color:var(--ink)}
+.slot.bad{border-color:var(--warn);background:var(--warn-soft)}
+details.book{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+details.book summary{min-height:48px;display:flex;align-items:center;padding:0 14px;font-weight:600;list-style:none}
+details.book summary::-webkit-details-marker{display:none}
+details.book summary::after{content:"+";margin-left:auto;font:700 22px/1 "Barlow Condensed",sans-serif;color:var(--muted)}
+details.book[open] summary::after{content:"–"}
+.book dl{margin:0;padding:0 14px 12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:15px}
+.book dt{color:var(--muted)}
+.book dd{margin:0;font-variant-numeric:tabular-nums}
+h2{font:700 21px/1.1 "Barlow Condensed",sans-serif;margin:14px 0 6px}
+.crate{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.pc{flex:0 0 150px;scroll-snap-align:start;min-height:76px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.pc b{font-weight:600;font-size:15px;line-height:1.2}
+.pc small{color:var(--muted);font-size:13px}
+.pc.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.pc .tag{margin-top:auto;font-size:12px;color:var(--accent);font-weight:600}
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.detail h3{font:700 22px/1.1 "Barlow Condensed",sans-serif;margin:0}
+.detail .story{margin:4px 0 10px;color:var(--muted);font-size:15px}
+.empty{color:var(--muted);padding:6px 0}
+.meas{border-top:1px solid var(--line);padding:8px 0}
+.meas button.tool{width:100%;min-height:48px;border:1.5px dashed var(--muted);background:transparent;border-radius:8px;text-align:left;padding:0 12px;font-weight:500}
+.meas .row{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:15px}
+.meas .row span:first-child{color:var(--muted)}
+.meas .row span:last-child{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.meas .th{font-size:13px;color:var(--muted);margin-bottom:2px}
+.btn{width:100%;min-height:52px;border:0;border-radius:8px;font-weight:600;font-size:17px;background:var(--accent);color:var(--accent-ink);margin-top:10px}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.bg{position:fixed;inset:0;background:rgba(8,14,18,.6);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.bg.open{display:flex}
+.sheet{width:100%;max-width:520px;max-height:88%;overflow:auto;background:var(--surface);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet h3{font:700 24px/1.1 "Barlow Condensed",sans-serif;margin:0 0 4px}
+.gauge{position:relative;height:40px;border-radius:6px;background:var(--line);overflow:hidden;margin:14px 0 6px}
+.gauge .zone{position:absolute;top:0;bottom:0;background:var(--ok);opacity:.5}
+.gauge .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent)}
+.gl{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.hold{width:100%;min-height:76px;border:0;border-radius:10px;background:var(--ink);color:var(--bg);font:700 22px "Barlow Condensed",sans-serif;margin-top:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.hold:active{background:var(--accent);color:var(--accent-ink)}
+.msg{min-height:44px;margin-top:8px;font-weight:500}
+.msg.err{color:var(--warn)}
+.res{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.res li{border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;font-size:15px}
+.res li.ok{border-color:var(--ok)}
+.res li.no{border-color:var(--warn);background:var(--warn-soft)}
+.res b{display:block}
+.stars{font:700 40px/1 "Barlow Condensed",sans-serif;color:var(--gold);letter-spacing:.08em}
+.big{font:700 44px/1 "Barlow Condensed",sans-serif;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Werkbank: Das Traumrad</h1>
+      <p class="sub">Stahlrenner, Baujahr 1983. Messen, einbauen, Probefahrt.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="zeit">0</b><span>Minuten</span></div>
+      <div class="stat"><b id="fehler">0</b><span>Fehlfahrten</span></div>
+    </div>
+  </header>
+
+  <div class="bike" aria-label="Das Rad in Seitenansicht">
+    <svg viewBox="0 0 360 190" role="img" aria-label="Fahrrad-Rahmen mit Einbauplätzen">
+      <!-- Laufräder -->
+      <g class="pt" data-s="rad">
+        <circle cx="80" cy="128" r="52"/><circle cx="280" cy="128" r="52"/>
+        <circle cx="80" cy="128" r="5" class="fillp"/><circle cx="280" cy="128" r="5" class="fillp"/>
+      </g>
+      <!-- Rahmen -->
+      <g class="fr">
+        <path d="M172 138 L152 58 L252 62 L172 138 Z"/>
+        <path d="M172 138 L80 128 L152 58"/>
+        <path d="M252 62 L280 128"/>
+        <path d="M250 56 L256 76"/>
+      </g>
+      <!-- Tretlager + Kurbel -->
+      <g class="pt" data-s="tret"><circle cx="172" cy="138" r="10"/><path d="M172 138 L196 164"/></g>
+      <!-- Pedale -->
+      <g class="pt fillp" data-s="ped"><rect x="190" y="162" width="22" height="6" rx="2"/></g>
+      <!-- Sattelstütze + Sattel -->
+      <g class="pt" data-s="stue"><path d="M152 58 L146 34"/><path d="M130 30 L166 30"/></g>
+      <!-- Vorbau + Lenker -->
+      <g class="pt" data-s="vorb"><path d="M250 56 L248 36 L272 36"/><path d="M272 36 q16 2 14 22"/></g>
+      <!-- Schaltwerk -->
+      <g class="pt" data-s="werk"><path d="M84 132 L90 150 L102 158"/><circle cx="104" cy="159" r="4"/></g>
+    </svg>
+  </div>
+
+  <div class="slots" id="slots"></div>
+
+  <details class="book">
+    <summary>Werkstattbuch: Daten vom Rahmen</summary>
+    <dl>
+      <dt>Hinterbau</dt><dd>126 mm</dd>
+      <dt>Bremse</dt><dd>Seitenzug, Schuhe sitzen für 27 Zoll (630 mm)</dd>
+      <dt>Tretlager</dt><dd>Englisch (BSA), Gehäuse 68 mm</dd>
+      <dt>Sattelrohr</dt><dd>innen 27,2 mm</dd>
+      <dt>Steuerrohr</dt><dd>Gewindesteuersatz, 1 Zoll, Schaft 22,2 mm</dd>
+      <dt>Kurbel</dt><dd>9/16 Zoll Pedalgewinde</dd>
+      <dt>Antrieb</dt><dd>Blätter 52/42, hinten 6-fach 14–28. Das Schaltwerk braucht Kapazität: Differenz vorn plus Differenz hinten.</dd>
+    </dl>
+  </details>
+
+  <h2 id="crateTitle">Teilekiste</h2>
+  <div class="crate" id="crate"></div>
+
+  <div class="detail" id="detail"></div>
+
+  <button class="btn" id="probe" disabled>Probefahrt</button>
+  <button class="btn ghost" id="reset">Neu anfangen</button>
+</div>
+
+<!-- Anzieh-Minispiel -->
+<div class="bg" id="torqueBg">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tTitle">
+    <h3 id="tTitle">Anziehen</h3>
+    <div class="sub" id="tSub">Halten, im grünen Bereich loslassen.</div>
+    <div class="gauge"><div class="zone" id="zone"></div><div class="fill" id="fill"></div></div>
+    <div class="gl"><span>locker</span><span>überdreht</span></div>
+    <button class="hold" id="hold">Halten</button>
+    <div class="msg" id="tMsg" aria-live="polite"></div>
+    <button class="btn ghost" id="tCancel">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Probefahrt-Ergebnis -->
+<div class="bg" id="resBg">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rTitle">
+    <div id="resBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+var SLOTS=[
+  {id:'rad',n:'Laufräder'},{id:'tret',n:'Tretlager'},{id:'ped',n:'Pedale'},
+  {id:'stue',n:'Sattelstütze'},{id:'vorb',n:'Vorbau'},{id:'werk',n:'Schaltwerk'}
+];
+function P(slot,id,name,year,story,sch,gew,lupe,edel,why){
+  return {slot:slot,id:id,name:name,year:year,story:story,g:{s:sch,g:gew,l:lupe},edel:edel,why:why||null};
+}
+var PARTS=[
+  // Laufräder
+  P('rad','r1','Rigida, 27 Zoll',1984,'Solide Alufelgen vom Flohmarkt. Die Speichen sind noch gerade.',
+    [['Felgenmaß','630 mm (27 Zoll)'],['Nabe hinten','126 mm']],
+    [['Schraubkranz','6-fach, 14–28']],
+    [['Stempel','Rigida, Made in France'],['Zustand','Läuft rund, Lager leicht rau']],2),
+  P('rad','r2','Mavic, 700C',1988,'Schöne Felgen, fast neu. Der Vorbesitzer war ein Rennradler.',
+    [['Felgenmaß','622 mm (700C)'],['Nabe hinten','126 mm']],
+    [['Schraubkranz','6-fach, 14–28']],
+    [['Stempel','Mavic MA40'],['Zustand','Wie neu']],2,
+    'Die 700C-Felge ist 4 mm kleiner im Radius. Die Bremsschuhe erreichen die Felgenflanke nicht.'),
+  P('rad','r3','Alu-Satz, 27 Zoll',1992,'Leichter Satz aus einem Tourenrad. Nabe mit Kassette.',
+    [['Felgenmaß','630 mm (27 Zoll)'],['Nabe hinten','130 mm']],
+    [['Aufnahme','Kassette, 8-fach 12–26']],
+    [['Stempel','Shimano 105 Nabe'],['Zustand','Sehr gut']],2,
+    'Die Nabe ist 130 mm breit, der Hinterbau nur 126 mm. Das Hinterrad geht nicht sauber rein.'),
+  // Tretlager
+  P('tret','t1','Stronglight, englisch',1982,'Kartuschenlager, gut eingefettet im Karton gefunden.',
+    [['Gehäusebreite','68 mm']],
+    [['Gewinde','1,37 Zoll × 24 TPI'],['Antriebsseite','Linksgewinde']],
+    [['Stempel','Stronglight, BSA'],['Zustand','Lager gängig']],2),
+  P('tret','t2','Campagnolo Record, italienisch',1979,'Sammlerstück. Jeder Schrauber will es haben.',
+    [['Gehäusebreite','68 mm']],
+    [['Gewinde','36 mm × 24 TPI'],['Antriebsseite','Rechtsgewinde']],
+    [['Stempel','Campagnolo, ITA'],['Zustand','Makellos']],3,
+    'Italienisches 36-mm-Gewinde passt nicht in das englische Gehäuse (1,37 Zoll). Das Gewinde im Rahmen wäre ruiniert.'),
+  P('tret','t3','Shimano UN-72, 73 mm',1989,'Gängiges Lager aus einem Alltagsrad.',
+    [['Gehäusebreite','73 mm']],
+    [['Gewinde','1,37 Zoll × 24 TPI'],['Antriebsseite','Linksgewinde']],
+    [['Stempel','Shimano UN-72'],['Zustand','Gut']],1,
+    'Das Lager ist für ein 73-mm-Gehäuse gebaut. Im 68-mm-Rahmen sitzen die Schalen nicht richtig.'),
+  // Pedale
+  P('ped','p1','Union Rennpedale',1981,'Schlicht, mit Körbchen-Haken. Drehen leicht.',
+    [['Gewindeschaft','14,3 mm']],
+    [['Gewinde','9/16 Zoll × 20 TPI'],['Links','Linksgewinde, mit L markiert']],
+    [['Stempel','Union, L und R'],['Zustand','Gut']],1),
+  P('ped','p2','Lyotard Nr. 23',1976,'Französischer Klassiker, wunderschön. Etwas Rost an den Käfigen.',
+    [['Gewindeschaft','14,0 mm']],
+    [['Gewinde','14 × 1,25 mm (französisch)']],
+    [['Stempel','Lyotard, Paris'],['Zustand','Patina']],3,
+    'Das französische 14×1,25-Gewinde passt nicht in die 9/16-Zoll-Kurbel. Das Kurbelgewinde wäre hin.'),
+  P('ped','p3','Kinderrad-Pedale',1990,'Kleine Plastikpedale, im Eimer gefunden.',
+    [['Gewindeschaft','12,7 mm']],
+    [['Gewinde','1/2 Zoll × 20 TPI']],
+    [['Stempel','ohne'],['Zustand','Angeschlagen']],0,
+    'Das 1/2-Zoll-Gewinde ist zu klein für die 9/16-Zoll-Kurbel. Die Pedale haben keinen Halt.'),
+  P('ped','p4','Campagnolo Record',1983,'Leichte Alu-Pedale mit Gravur. Ein Traum am Rennrad.',
+    [['Gewindeschaft','14,3 mm']],
+    [['Gewinde','9/16 Zoll × 20 TPI'],['Links','Linksgewinde, mit L markiert']],
+    [['Stempel','Campagnolo Record'],['Zustand','Sehr gut']],3),
+  // Sattelstützen
+  P('stue','s1','Stahlstütze, dünn',1978,'Klassische Stütze. Leichter Flugrost.',
+    [['Schaft','27,0 mm']],
+    [['Klemmkopf','Schraube M8']],
+    [['Stempel','ohne'],['Zustand','Flugrost']],0,
+    'Mit 27,0 mm ist die Stütze 0,2 mm zu dünn. Sie rutscht im Sattelrohr durch.'),
+  P('stue','s2','Stahlstütze, 27,2',1980,'Schlicht und solide. Ein ehrliches Teil.',
+    [['Schaft','27,2 mm']],
+    [['Klemmkopf','Schraube M8']],
+    [['Stempel','27.2'],['Zustand','Gut']],1),
+  P('stue','s3','Campagnolo Record, Alu',1984,'Gefräster Kopf, feine Riefen am Schaft. Sehr schön.',
+    [['Schaft','27,2 mm']],
+    [['Klemmkopf','Zwei Schrauben']],
+    [['Stempel','Campagnolo Record, 27.2'],['Zustand','Sehr gut']],3),
+  P('stue','s4','Stütze, dick',1986,'Stammt aus einem anderen Rahmen. Sieht passend aus.',
+    [['Schaft','27,4 mm']],
+    [['Klemmkopf','Schraube M8']],
+    [['Stempel','27.4'],['Zustand','Gut']],0,
+    'Mit 27,4 mm ist die Stütze 0,2 mm zu dick. Sie geht nicht ins Sattelrohr.'),
+  // Vorbau
+  P('vorb','v1','Ahead-Vorbau',2005,'Modern und leicht. Ein bisschen zu neu für das Rad.',
+    [['Klemmung','28,6 mm (1 1/8 Zoll)']],
+    [['Bauart','Ahead, klemmt außen am Schaft']],
+    [['Stempel','Ritchey'],['Zustand','Wie neu']],0,
+    'Ein Ahead-Vorbau klemmt außen am Gabelschaft. Das Rad hat einen Gewindeschaft, der Schaftvorbau steckt innen.'),
+  P('vorb','v2','Schaftvorbau, dick',1991,'Aus einem Mountainbike. Schönes Alu.',
+    [['Schaft','25,4 mm']],
+    [['Bauart','Schaftvorbau (steckt im Gabelrohr)']],
+    [['Stempel','Dia-Compe, 1 1/8'],['Zustand','Gut']],1,
+    'Der 25,4-mm-Schaft gehört in eine 1-1/8-Zoll-Gabel. In den 1-Zoll-Schaft des Rads passt er nicht.'),
+  P('vorb','v3','3ttt Schaftvorbau',1985,'Klassischer Italiener. Schlicht und leicht.',
+    [['Schaft','22,2 mm']],
+    [['Bauart','Schaftvorbau (steckt im Gabelrohr)']],
+    [['Stempel','3ttt, 1 Zoll'],['Zustand','Gut']],2),
+  P('vorb','v4','Cinelli 1A',1980,'Das Original. Schwarz eloxiert mit Gravur.',
+    [['Schaft','22,2 mm']],
+    [['Bauart','Schaftvorbau (steckt im Gabelrohr)']],
+    [['Stempel','Cinelli 1A, 1 Zoll'],['Zustand','Sehr gut']],3),
+  // Schaltwerk
+  P('werk','w1','Simplex, Kurzkäfig',1975,'Kleines, filigranes Werk. Ein Rennschaltwerk.',
+    [['Käfiglänge','kurz']],
+    [['Schaltauge','M10 × 1']],
+    [['Typenschild','Kapazität 16 Zähne'],['Zustand','Gut']],1,
+    'Das Schaltwerk fasst 16 Zähne. Der Antrieb braucht 24 (vorn 10, hinten 14). Die Kette spannt sich zu stark.'),
+  P('werk','w2','Sachs Huret Jubilee',1980,'Leicht und selten. Wirkt zerbrechlich, läuft aber super.',
+    [['Käfiglänge','mittel']],
+    [['Schaltauge','M10 × 1']],
+    [['Typenschild','Kapazität 24 Zähne'],['Zustand','Gut']],2),
+  P('werk','w3','Campagnolo Nuovo Record',1974,'Der Klassiker unter den Schaltwerken. Poliert und gepflegt.',
+    [['Käfiglänge','mittel']],
+    [['Schaltauge','M10 × 1']],
+    [['Typenschild','Kapazität 28 Zähne'],['Zustand','Sehr gut']],3)
+];
+var TOOLS={s:{n:'Schieblehre',i:'📏',t:'Maße'},g:{n:'Gewindelehre',i:'🔩',t:'Gewinde'},l:{n:'Lupe',i:'🔍',t:'Stempel und Zustand'}};
+var S;
+function $(id){return document.getElementById(id)}
+function part(id){for(var i=0;i<PARTS.length;i++)if(PARTS[i].id===id)return PARTS[i];return null}
+function slotName(id){for(var i=0;i<SLOTS.length;i++)if(SLOTS[i].id===id)return SLOTS[i].n}
+
+function init(){
+  S={sel:'rad',part:null,inst:{},meas:{},zeit:0,fehler:0,bad:{}};
+  $('resBg').classList.remove('open');$('torqueBg').classList.remove('open');
+  render();
+}
+function filledCount(){return Object.keys(S.inst).length}
+function render(){
+  $('zeit').textContent=S.zeit;$('fehler').textContent=S.fehler;
+  // Rad
+  var els=document.querySelectorAll('[data-s]');
+  for(var i=0;i<els.length;i++){
+    var k=els[i].getAttribute('data-s');
+    els[i].classList.toggle('on',!!S.inst[k]&&!S.bad[k]);
+    els[i].classList.toggle('bad',!!S.bad[k]);
+  }
+  // Slots
+  var h='';
+  SLOTS.forEach(function(s){
+    var p=S.inst[s.id]?part(S.inst[s.id]):null;
+    h+='<button class="slot'+(S.sel===s.id?' sel':'')+(p?' filled':'')+(S.bad[s.id]?' bad':'')+'" data-slot="'+s.id+'">'+
+       '<b>'+s.n+'</b><small>'+(p?p.name:'leer')+'</small></button>';
+  });
+  $('slots').innerHTML=h;
+  // Kiste
+  $('crateTitle').textContent='Teilekiste: '+slotName(S.sel);
+  h='';
+  PARTS.filter(function(p){return p.slot===S.sel}).forEach(function(p){
+    h+='<button class="pc'+(S.part===p.id?' sel':'')+'" data-part="'+p.id+'"><b>'+p.name+'</b><small>'+p.year+'</small>'+
+       (S.inst[S.sel]===p.id?'<span class="tag">eingebaut</span>':'')+'</button>';
+  });
+  $('crate').innerHTML=h;
+  renderDetail();
+  var n=filledCount();
+  $('probe').disabled=n<SLOTS.length;
+  $('probe').textContent=n<SLOTS.length?'Probefahrt ('+n+' von '+SLOTS.length+' eingebaut)':'Probefahrt';
+}
+function renderDetail(){
+  var d=$('detail');
+  if(!S.part){d.innerHTML='<div class="empty">Tippe ein Teil an, miss es nach und bau es ein.</div>';return}
+  var p=part(S.part);
+  var m=S.meas[p.id]||{};
+  var h='<h3>'+p.name+'</h3><p class="story">Baujahr '+p.year+'. '+p.story+'</p>';
+  ['s','g','l'].forEach(function(k){
+    var T=TOOLS[k];
+    h+='<div class="meas">';
+    if(m[k]){
+      h+='<div class="th">'+T.i+' '+T.n+'</div>';
+      p.g[k].forEach(function(r){h+='<div class="row"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>'});
+    }else{
+      h+='<button class="tool" data-tool="'+k+'">'+T.i+' '+T.t+' prüfen mit '+T.n+' (+1 Min.)</button>';
+    }
+    h+='</div>';
+  });
+  var isIn=S.inst[p.slot]===p.id;
+  h+='<button class="btn" data-act="'+(isIn?'out':'in')+'">'+(isIn?'Ausbauen':'Einbauen')+'</button>';
+  d.innerHTML=h;
+}
+
+// Events
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-slot],[data-part],[data-tool],[data-act]');
+  if(!t)return;
+  if(t.dataset.slot){S.sel=t.dataset.slot;S.part=S.inst[S.sel]||null;render();return}
+  if(t.dataset.part){S.part=t.dataset.part;render();return}
+  if(t.dataset.tool){
+    var m=S.meas[S.part]||(S.meas[S.part]={});
+    if(!m[t.dataset.tool]){m[t.dataset.tool]=true;S.zeit+=1}
+    render();return;
+  }
+  if(t.dataset.act==='in')startTorque(part(S.part));
+  if(t.dataset.act==='out'){var p=part(S.part);delete S.inst[p.slot];delete S.bad[p.slot];render()}
+});
+
+// Anzieh-Minispiel
+var T={running:false,v:0,t0:0,raf:0,z0:60,zw:18,p:null};
+function startTorque(p){
+  T.p=p;T.v=0;T.running=false;
+  T.z0=54+Math.random()*16;
+  $('zone').style.left=T.z0+'%';$('zone').style.width=T.zw+'%';
+  $('fill').style.width='0%';
+  $('tTitle').textContent=p.name+' anziehen';
+  $('tSub').textContent=p.slot==='ped'||p.slot==='tret'
+    ?'Halten und im grünen Bereich loslassen. Gewinde sind empfindlich.'
+    :'Halten und im grünen Bereich loslassen.';
+  $('tMsg').textContent='';$('tMsg').className='msg';
+  $('torqueBg').classList.add('open');
+}
+function loop(now){
+  if(!T.running)return;
+  T.v=Math.min(100,(now-T.t0)/1000*50);
+  $('fill').style.width=T.v+'%';
+  if(T.v>=100){finishTorque()}else{T.raf=requestAnimationFrame(loop)}
+}
+function finishTorque(){
+  if(!T.running)return;
+  T.running=false;cancelAnimationFrame(T.raf);
+  var v=T.v,msg=$('tMsg');
+  if(v<T.z0){
+    S.zeit+=1;msg.className='msg err';msg.textContent='Zu locker, das Teil wackelt noch. (+1 Min.) Nochmal.';
+    $('zeit').textContent=S.zeit;
+  }else if(v>T.z0+T.zw){
+    S.zeit+=2;msg.className='msg err';msg.textContent='Überdreht, das Gewinde leidet. (+2 Min.) Nochmal.';
+    $('zeit').textContent=S.zeit;
+  }else{
+    var p=T.p;
+    S.inst[p.slot]=p.id;delete S.bad[p.slot];
+    $('torqueBg').classList.remove('open');
+    // nächsten leeren Platz wählen
+    var next=null;
+    for(var i=0;i<SLOTS.length;i++){if(!S.inst[SLOTS[i].id]){next=SLOTS[i].id;break}}
+    if(next){S.sel=next;S.part=null}else{S.part=p.id}
+    render();
+    window.scrollTo({top:document.querySelector('.slots').offsetTop-8,behavior:'smooth'});
+  }
+}
+var hold=$('hold');
+hold.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  if(T.running)return;
+  T.running=true;T.v=0;T.t0=performance.now();
+  $('tMsg').textContent='';$('tMsg').className='msg';
+  try{hold.setPointerCapture(e.pointerId)}catch(x){}
+  T.raf=requestAnimationFrame(loop);
+});
+['pointerup','pointercancel'].forEach(function(ev){hold.addEventListener(ev,function(){finishTorque()})});
+hold.addEventListener('contextmenu',function(e){e.preventDefault()});
+$('tCancel').addEventListener('click',function(){
+  T.running=false;cancelAnimationFrame(T.raf);$('torqueBg').classList.remove('open');
+});
+
+// Probefahrt
+$('probe').addEventListener('click',function(){
+  var bad=0,edel=0,h='';
+  S.bad={};
+  var items=SLOTS.map(function(s){
+    var p=part(S.inst[s.id]);
+    if(p.why){bad++;S.bad[s.id]=true}
+    edel+=p.edel;
+    return {s:s,p:p};
+  });
+  if(bad){
+    S.fehler+=1;S.zeit+=3;
+    h='<h3 id="rTitle">Das Rad rollt nicht rund</h3><p class="sub">'+bad+' von '+SLOTS.length+' Teilen passen nicht. (+3 Min.)</p><ul class="res">';
+    items.forEach(function(it){
+      h+= it.p.why
+        ? '<li class="no"><b>'+it.s.n+': '+it.p.name+'</b>'+it.p.why+'</li>'
+        : '<li class="ok"><b>'+it.s.n+': '+it.p.name+'</b>Passt.</li>';
+    });
+    h+='</ul><button class="btn" id="rClose">Zurück zur Werkbank</button>';
+  }else{
+    var stars=(S.fehler===0&&S.zeit<=14)?3:(S.fehler<=1&&S.zeit<=26)?2:1;
+    var pct=Math.round(edel/17*100);
+    var wort=pct>=80?'Ein Traumrad.':pct>=55?'Ein feines Stück.':'Ein ehrliches Alltagsrad.';
+    var s='';for(var i=0;i<3;i++)s+=i<stars?'★':'☆';
+    h='<h3 id="rTitle">Probefahrt bestanden</h3><div class="stars" aria-label="'+stars+' von 3 Sternen">'+s+'</div>'+
+      '<p class="sub">'+S.zeit+' Minuten, '+S.fehler+' Fehlfahrten</p>'+
+      '<div class="big">'+pct+' %</div><p>Traumrad-Wert: '+wort+' Edelteile machen den Unterschied.</p><ul class="res">';
+    items.forEach(function(it){h+='<li class="ok"><b>'+it.s.n+': '+it.p.name+'</b>Passt.</li>'});
+    h+='</ul><button class="btn" id="rAgain">Nochmal mit neuem Anlauf</button><button class="btn ghost" id="rClose">Rad ansehen</button>';
+  }
+  $('resBody').innerHTML=h;
+  $('resBg').classList.add('open');
+  render();
+  var c=$('rClose');if(c)c.addEventListener('click',function(){$('resBg').classList.remove('open')});
+  var a=$('rAgain');if(a)a.addEventListener('click',init);
+});
+$('reset').addEventListener('click',init);
+init();
+})();
+</script>
+</body>
+</html>

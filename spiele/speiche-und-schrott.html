@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Speiche & Schrott – Fahrradwerkstatt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#dfe6dc; --panel:#f5f7f1; --panel2:#eaefe6; --ink:#18211d; --muted:#5a6660; --line:#c3cdc0;
+  --hi:#ffcf24; --blue:#2a5bd7; --red:#d8432f; --good:#2f9a5a; --warn:#d99a1e;
+  --peg:#c9d3c5; --sky-a:#9fd3ff; --sky-b:#ffe6a8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111714; --panel:#1a221e; --panel2:#212b26; --ink:#eef3ec; --muted:#9aa89f; --line:#34413a;
+    --peg:#1f2a24; --sky-a:#2b4c6e; --sky-b:#6b5a3a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111714; --panel:#1a221e; --panel2:#212b26; --ink:#eef3ec; --muted:#9aa89f; --line:#34413a;
+  --peg:#1f2a24; --sky-a:#2b4c6e; --sky-b:#6b5a3a;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;line-height:1.1}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px 110px}
+/* Header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(180deg,var(--sky-a),var(--sky-b));color:#16202a;padding:10px 14px 12px;transition:background .6s}
+body.night header{background:linear-gradient(180deg,#0b1430,#26305a);color:#eef}
+.hrow{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.clock{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;display:flex;align-items:center;gap:8px}
+.clock small{font-weight:600;font-size:14px;opacity:.8}
+.stats{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.6);border-radius:999px;padding:3px 10px;font-weight:700;font-size:14px;white-space:nowrap}
+body.night .pill{background:rgba(255,255,255,.12)}
+.energy{flex:1 1 140px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.ebar{flex:1;height:8px;border-radius:8px;background:rgba(0,0,0,.15);overflow:hidden}
+.ebar i{display:block;height:100%;background:var(--hi)}
+.sleep{border:0;border-radius:10px;padding:6px 12px;background:#16202a;color:#fff;font-weight:700}
+body.night .sleep{background:var(--hi);color:#16202a}
+/* Hero bike on pegboard */
+.bench{margin:14px 0;border-radius:18px;padding:12px;background-color:var(--peg);background-image:radial-gradient(circle,rgba(0,0,0,.18) 2px,transparent 2.5px);background-size:22px 22px;position:relative;overflow:hidden}
+body.night .bench{background-color:#0c1322}
+.bike{width:100%;height:auto;display:block}
+.bikemeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.score{font-family:"Bricolage Grotesque";font-weight:800;font-size:30px}
+.muted{color:var(--muted)} .small{font-size:13px} .dim{opacity:.25}
+section.block{background:var(--panel);border-radius:16px;padding:14px;margin:12px 0;border:1px solid var(--line)}
+section.block h2{font-size:20px;margin-bottom:10px}
+.part{border-top:1px solid var(--line);padding:10px 0}
+.part:first-of-type{border-top:0}
+.pt{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.pm{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.stars{color:#e0a800;letter-spacing:1px;font-size:14px}
+.bar{width:70px;height:7px;border-radius:7px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.3)}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.t-rennen{border-color:#2a5bd7} .t-polo{border-color:#d8432f} .t-gravel{border-color:#8a6a2c} .t-stadt{border-color:#2f9a5a} .t-vintage{border-color:#a259c4}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:7px 12px;font-weight:700;font-size:14px}
+.btn.main{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.hi{background:var(--hi);color:#16202a;border-color:#d9ad00}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:10px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+/* Map grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.place{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px;min-height:110px;display:flex;flex-direction:column;gap:4px}
+.place .em{font-size:30px}
+.place b{font-family:"Bricolage Grotesque";font-size:16px}
+.place.closed{opacity:.55}
+.place.secret{background:repeating-linear-gradient(45deg,var(--panel),var(--panel) 10px,var(--panel2) 10px,var(--panel2) 20px)}
+.status{font-size:12px;font-weight:700}
+.open{color:var(--good)} .shut{color:var(--red)}
+/* People */
+.person{display:flex;gap:12px;align-items:flex-start}
+.avatar{font-size:34px;width:56px;height:56px;display:grid;place-items:center;border-radius:16px;background:var(--panel2);flex:none}
+.hearts{letter-spacing:1px;font-size:13px}
+/* Quests & events */
+.quest{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding:10px 0}
+.quest:first-of-type{border-top:0}
+.quest.done{opacity:.5}
+.check{font-size:20px;width:26px;text-align:center;flex:none}
+.event{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0;background:var(--panel2)}
+.event h3{font-size:18px}
+/* Nav */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.navin{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav button{border:0;background:none;padding:8px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted)}
+nav button span{font-size:22px}
+nav button.on{color:var(--ink)}
+nav button.on span{transform:translateY(-2px)}
+.badge{background:var(--red);color:#fff;border-radius:999px;font-size:10px;padding:0 5px;margin-left:2px}
+/* Sheet */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet.hidden{display:none}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.sheet-card{position:relative;background:var(--panel);width:100%;max-width:720px;max-height:86%;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet-card{animation:none}}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.sheet-head h3{font-size:22px}
+.x{border:0;background:var(--panel2);border-radius:50%;width:36px;height:36px;font-size:16px}
+.say{background:var(--panel2);border-radius:14px 14px 14px 4px;padding:10px 12px;margin:8px 0}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.sw{width:38px;height:38px;border-radius:50%;border:2px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:60;max-width:92%;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:opacity .3s}
+.toast.hide{opacity:0;pointer-events:none}
+.place-medal{font-size:56px;text-align:center}
+.giftrow{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header id="top"></header>
+<main class="wrap" id="main"></main>
+<nav><div class="navin" id="nav"></div></nav>
+<div id="sheet" class="sheet hidden"><div class="sheet-bg" onclick="closeSheet()"></div><div class="sheet-card" role="dialog" aria-modal="true"><div class="sheet-head"><h3 id="sheetT"></h3><button class="x" onclick="closeSheet()" aria-label="Schließen">✕</button></div><div id="sheetB"></div></div></div>
+<div id="toast" class="toast hide"></div>
+
+<script>
+/* ---------- Daten ---------- */
+const TYPES={rahmen:'Rahmen',laufrad:'Laufräder',antrieb:'Antrieb',bremse:'Bremsen',lenker:'Lenker',sattel:'Sattel',licht:'Licht'};
+const REQ=['rahmen','laufrad','antrieb','bremse','lenker','sattel'];
+const TAGN={rennen:'Rennen',gravel:'Gravel',polo:'Polo',stadt:'Stadt',vintage:'Vintage'};
+const CAT={
+  rahmen:[['Stahl-Rennrahmen',['rennen','vintage']],['Alu-Gravelrahmen',['gravel']],['Polo-Rahmen, kurzer Radstand',['polo']],['Hollandrahmen',['stadt','vintage']],['Carbon-Rennrahmen',['rennen']],['Stahl-Allroad-Rahmen',['gravel','stadt']]],
+  laufrad:[['700c Rennlaufräder',['rennen']],['Gravel-Laufräder 40 mm',['gravel']],['Polo-Laufräder mit Speichenschutz',['polo']],['28" Stadtlaufräder',['stadt']],['Schlauchreifen-Laufräder',['rennen','vintage']]],
+  antrieb:[['Singlespeed-Kit',['polo','stadt']],['Shimano-105-Gruppe',['rennen']],['1×11 Gravelantrieb',['gravel']],['3-Gang-Nabe',['stadt']],['Campagnolo Record, alt',['rennen','vintage']],['Kurze Polo-Übersetzung',['polo']]],
+  bremse:[['Felgenbremsen',['rennen']],['Mechanische Scheibenbremsen',['gravel','polo']],['Rücktritt',['stadt']],['Hydraulische Scheiben',['gravel']],['Mafac-Mittelzug, alt',['vintage','rennen']]],
+  lenker:[['Rennlenker',['rennen']],['Flatbar, kurz',['polo']],['Gravel-Flare-Lenker',['gravel']],['Hollandlenker',['stadt','vintage']],['Polo-Riser',['polo']]],
+  sattel:[['Brooks-Ledersattel',['vintage','stadt']],['Rennsattel',['rennen']],['Polo-Sattel, flach',['polo']],['Komfortsattel',['stadt']],['Gravel-Sattel',['gravel']]],
+  licht:[['Dynamo-Licht',['stadt']],['Akku-Frontlicht',['gravel','rennen']],['Retro-Scheinwerfer',['vintage']],['Kompaktes Polo-Licht',['polo']]]
+};
+const GIFTS={kaffee:{n:'Kaffee',e:'☕',p:4},kettenoel:{n:'Kettenöl',e:'🛢️',p:8},sticker:{n:'Sticker-Pack',e:'🏷️',p:3},riegel:{n:'Energieriegel',e:'🍫',p:3},glocke:{n:'Vintage-Klingel',e:'🔔',p:25}};
+const PEOPLE={
+  schrott:{n:'Kalle',role:'Schrotthändler',e:'🧔',place:'schrott',likes:['kaffee','kettenoel'],dislikes:['sticker'],
+    lines:['Moin! Alles hier ist Gold. Man muss nur den Rost wegdenken.','Die guten Teile kommen montags. Oder dienstags. Oder nie.','Für’n Kaffee erzähl ich dir alles. Fast alles.'],
+    unlock:[[3,'Psst… im alten Bahntunnel hinter den Gleisen liegt noch Zeug von der Bahnmeisterei. Von mir hast du das nicht.'],[6,'Für dich ab jetzt 20 % Rabatt. Stammkundschaft.']]},
+  polo:{n:'Mo',role:'Bike-Polo-Spielerin',e:'🏑',place:'court',likes:['sticker','riegel'],dislikes:['glocke'],
+    lines:['Beim Polo zählt Wendigkeit, nicht Gewicht.','Kurzer Radstand, Singlespeed, Scheibenbremse. So baut man ein Polo-Rad.','Wer Fuß absetzt, muss zur Bande. Regel Nummer eins.'],
+    unlock:[[3,'Komm zum Turnier! Ich hab dich auf die Liste gesetzt.'],[6,'Bau mir ein Polo-Rad, ich zahl dir mehr als jeder andere.']]},
+  sammler:{n:'Herr Albrecht',role:'Fahrradsammler',e:'🎩',place:'villa',likes:['glocke','kaffee'],dislikes:['riegel'],
+    lines:['Ein Rad ist erst schön, wenn es eine Geschichte hat.','Brooks, Campagnolo, Stahl. Da werde ich schwach.','Pulverbeschichtung? Nur in einem Farbton mit Würde, bitte.'],
+    unlock:[[2,'Ich habe Sie beim Vintage-Concours empfohlen.'],[3,'Bringen Sie mir ein Rad mit Charakter, ich zahle anständig.'],[4,'Auf dem Dachboden der alten Mühle stand früher ein ganzer Rennstall. Vielleicht ist da noch etwas.']]},
+  ausbilder:{n:'Meisterin Petra',role:'Ausbilderin',e:'🛠️',place:'schule',likes:['kettenoel','kaffee'],dislikes:[],
+    lines:['Erst putzen, dann prüfen, dann schrauben.','Wer nachts fährt, braucht Licht. Wer gewinnt, braucht Training.','Eine gute Probefahrt verrät dir mehr als jede Messlehre.'],
+    unlock:[[2,'Für dich gibt’s ab jetzt Kurse zum Azubi-Preis.']]}
+};
+const PLACES={
+  laden:{n:'Fahrradladen Kette & Co.',e:'🏪',open:[9,19],d:'Neuteile und kleine Geschenke.'},
+  schrott:{n:'Schrottplatz',e:'🧲',open:[7,18],who:'schrott',d:'Billige Teile, viel Rost.'},
+  court:{n:'Polo-Court',e:'🏑',open:[15,23],who:'polo',d:'Abends wird gespielt.'},
+  villa:{n:'Sammler-Villa',e:'🏛️',open:[10,19],who:'sammler',d:'Kauft Räder mit Charakter.'},
+  schule:{n:'Berufsschule',e:'🎓',open:[8,17],who:'ausbilder',d:'Kurse für Reparatur, Lack und Fahrtechnik.'},
+  lack:{n:'Pulverbeschichterei',e:'🎨',open:[7,17],d:'Neue Farbe für deinen Rahmen.'},
+  partner:{n:'Werkstatt-Verbund',e:'🤝',open:[8,20],d:'Partnerwerkstätten mit Vorteilen.'},
+  tunnel:{n:'Alter Bahntunnel',e:'🚇',open:[0,29],secret:true,hint:'Kalle weiß mehr, wenn er dich mag.'},
+  bruecke:{n:'Unter der Kanalbrücke',e:'🌉',open:[20,29],night:true,secret:true,hint:'Nachts auf Probefahrt sieht man Dinge, die tagsüber verborgen sind.'},
+  dachboden:{n:'Dachboden der Mühle',e:'🏚️',open:[8,20],secret:true,hint:'Ein Sammler hütet ein Geheimnis.'}
+};
+const PARTNERS={
+  lack:{n:'Lackwerk Süd',e:'🎨',cost:200,rep:5,inc:10,perk:'Pulverbeschichtung kostet 35 € statt 60 €.'},
+  speichen:{n:'Speichenwerk',e:'⚙️',cost:250,rep:8,inc:15,perk:'Laufräder reparierst du doppelt so gut.'},
+  rahmenbau:{n:'Rahmenbau Nord',e:'🔩',cost:450,rep:18,inc:25,perk:'Verkauft dir handgelötete Top-Rahmen.'}
+};
+const COLORS=[['#d8432f','Signalrot'],['#2a5bd7','Kettenblau'],['#2f9a5a','Tannengrün'],['#ffcf24','Warngelb'],['#7d3c98','Pflaume'],['#1c1c1c','Mattschwarz'],['#efefe8','Elfenbein'],['#ff7eb6','Bonbonrosa'],['#3fb6c4','Celeste']];
+const EVENTS=[
+  {id:'krit',n:'Feierabend-Kriterium',e:'🏁',tag:'rennen',night:false,fee:20,prize:[180,90,40],rep:[8,4,2],d:'Schnelle Runden ums Gewerbegebiet.'},
+  {id:'polo',n:'Bike-Polo-Turnier',e:'🏑',tag:'polo',night:false,fee:15,prize:[150,70,30],rep:[10,5,2],d:'Drei gegen drei auf dem Court.',req:()=>S.friends.polo>=3,reqT:'Mo muss dich eintragen (❤️ 3 bei Mo).'},
+  {id:'gravel',n:'Nacht-Gravel-Ride',e:'🌙',tag:'gravel',night:true,fee:25,prize:[220,110,50],rep:[10,5,3],light:true,d:'Schotter, Wald und Stirnlampen. Nur nachts.'},
+  {id:'concours',n:'Vintage-Concours',e:'🏆',tag:'vintage',night:false,fee:10,prize:[200,100,40],rep:[8,4,2],coat:true,d:'Die Jury liebt Geschichte und frischen Lack.',req:()=>S.friends.sammler>=2,reqT:'Herr Albrecht muss dich empfehlen (❤️ 2).'}
+];
+const QUESTS=[
+  {id:'q1',t:'Teilejagd',d:'Kaufe oder finde 4 Teile.',c:()=>S.st.found>=4,r:[30,1]},
+  {id:'q2',t:'Erstes Rad',d:'Montiere alle 6 Pflichtteile.',c:()=>complete()||S.st.sold>0,r:[50,3]},
+  {id:'q3',t:'Probefahrt am Tag',d:'Fahr dein Rad bei Tageslicht Probe.',c:()=>S.st.dayRide>=1,r:[20,2]},
+  {id:'q4',t:'Farbe bekennen',d:'Lass einen Rahmen pulverbeschichten.',c:()=>S.st.coated>=1,r:[40,3]},
+  {id:'q5',t:'Nachtschicht',d:'Probefahrt bei Nacht, mit Licht.',c:()=>S.st.nightRide>=1,r:[40,3]},
+  {id:'q6',t:'Gute Nachbarschaft',d:'Verteile 5 Geschenke.',c:()=>S.st.gifts>=5,r:[40,4]},
+  {id:'q7',t:'Erster Verkauf',d:'Verkaufe ein Rad.',c:()=>S.st.sold>=1,r:[30,3]},
+  {id:'q8',t:'Geheimtipp',d:'Entdecke einen geheimen Ort.',c:()=>secretCount()>=1,r:[50,4]},
+  {id:'q9',t:'Aufs Podest',d:'Lande bei einem Sport-Event auf Platz 1 bis 3.',c:()=>S.st.podium>=1,r:[60,5]},
+  {id:'q10',t:'Im Verbund',d:'Werde Partner einer Werkstatt.',c:()=>Object.keys(S.partners).length>=1,r:[50,5]},
+  {id:'q11',t:'Sammlerstück',d:'Verkaufe Herrn Albrecht ein Rad für mindestens 300 €.',c:()=>S.st.bigSale>=1,r:[80,6]},
+  {id:'q12',t:'Siegertyp',d:'Gewinne ein Sport-Event.',c:()=>S.st.wins>=1,r:[100,8]},
+  {id:'q13',t:'Meisterbrief',d:'Bring alle drei Fähigkeiten auf Stufe 3.',c:()=>Object.values(S.skill).every(v=>v>=3),r:[120,8]},
+  {id:'q14',t:'Stadtkenner',d:'Finde alle drei geheimen Orte.',c:()=>secretCount()>=3,r:[150,10]}
+];
+const SKILLN={repair:['🔧','Reparatur'],coat:['🎨','Lackierung'],ride:['🚴','Fahrtechnik']};
+
+/* ---------- Zustand ---------- */
+const KEY='speiche-schrott-v1';
+let S;
+function fresh(){return{money:150,rep:0,day:1,hour:8,energy:10,maxE:10,skill:{repair:1,coat:1,ride:1},inv:[],bike:{},tested:false,
+  gifts:{kaffee:1,kettenoel:0,sticker:0,riegel:0,glocke:0},friends:{schrott:0,polo:0,sammler:0,ausbilder:0},known:{},
+  secrets:{tunnel:false,bruecke:false,dachboden:false},partners:{},claimed:{},
+  st:{found:0,coated:0,dayRide:0,nightRide:0,gifts:0,sold:0,bigSale:0,podium:0,wins:0},
+  today:{talk:{},gift:{},ev:{},sec:{},dig:0},stock:{},nextId:1,tab:'werk',intro:true}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
+
+/* ---------- Helfer ---------- */
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const isNight=()=>S.hour>=20||S.hour<6;
+const fmtH=h=>String(h%24).padStart(2,'0')+':00';
+function makePart(src,type){
+  let name,tags;
+  if(src==='vintage'){
+    const all=[];for(const t in CAT)for(const it of CAT[t])if(it[1].includes('vintage'))all.push([t,it]);
+    const [t,it]=pick(all);type=t;[name,tags]=it;
+  }else{type=type||pick(Object.keys(CAT));[name,tags]=pick(CAT[type]);}
+  let q,c;
+  if(src==='schrott'){q=rnd(1,3);c=rnd(15,55)}
+  else if(src==='laden'){q=rnd(2,4);c=100}
+  else if(src==='rahmenbau'){q=rnd(4,5);c=100}
+  else if(src==='geheim'||src==='vintage'){q=rnd(3,5);c=rnd(30,70)}
+  else{q=rnd(1,3);c=rnd(25,70)}
+  return{id:S.nextId++,type,name,tags:[...tags],q,c,color:null};
+}
+function partValue(p){let v=p.q*p.q*10*(0.35+0.65*p.c/100);if(p.color)v*=1.3;if(p.tags.includes('vintage'))v*=1.2;return Math.round(v)}
+const complete=()=>REQ.every(t=>S.bike[t]);
+function bikeParts(){return Object.values(S.bike)}
+function bikeScore(){if(!complete())return 0;let s=0;for(const t of REQ){const p=S.bike[t];s+=p.q*20*(0.5+0.5*p.c/100)}return Math.round(s/REQ.length+(S.bike.licht?3:0))}
+function tagCount(tag){return bikeParts().filter(p=>p.tags.includes(tag)).length}
+function profile(){let best=null,n=0;for(const t in TAGN){const c=tagCount(t);if(c>n){n=c;best=t}}return[best,n]}
+function bikeValue(){return Math.round(bikeParts().reduce((a,p)=>a+partValue(p),0)*(S.tested?1.15:1))}
+function secretCount(){return Object.values(S.secrets).filter(Boolean).length}
+function findPart(id){return S.inv.find(p=>p.id===id)||bikeParts().find(p=>p.id===id)}
+function isOpen(k){const p=PLACES[k];if(p.secret&&!S.secrets[k])return false;const h=S.hour;if(p.night)return isNight();return h>=p.open[0]&&h<p.open[1]}
+function spend(h,e){
+  if(S.energy<e){toast('Zu wenig Energie. Schlaf eine Runde 😴');return false}
+  if(S.hour+h>28){toast('Es ist zu spät dafür. Ab ins Bett!');return false}
+  S.hour+=h;S.energy-=e;return true}
+function pay(x){if(S.money<x){toast(`Dir fehlen ${x-S.money} €.`);return false}S.money-=x;return true}
+function newStock(){
+  S.stock.laden=[makePart('laden','licht'),makePart('laden'),makePart('laden'),makePart('laden')];
+  S.stock.schrott=Array.from({length:5},()=>makePart('schrott'));
+  S.stock.rahmenbau=[makePart('rahmenbau','rahmen'),makePart('rahmenbau','rahmen')];
+}
+function after(){save();render();if(!document.getElementById('sheet').classList.contains('hidden'))renderSheet()}
+let tt;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>el.classList.add('hide'),2600)}
+
+/* ---------- Aktionen ---------- */
+function install(id){const i=S.inv.findIndex(p=>p.id===id);if(i<0)return;const p=S.inv[i];if(S.bike[p.type])S.inv.push(S.bike[p.type]);S.bike[p.type]=p;S.inv.splice(i,1);S.tested=false;toast(`${p.name} montiert.`);closeSheet();after()}
+function uninstall(t){if(!S.bike[t])return;S.inv.push(S.bike[t]);delete S.bike[t];S.tested=false;after()}
+function repair(id){const p=findPart(id);if(!p)return;if(p.c>=100)return toast('Das Teil ist schon top in Schuss.');if(S.money<5)return toast('Material kostet 5 €.');if(!spend(1,1))return;S.money-=5;
+  let a=10+S.skill.repair*8;if(p.type==='laufrad'&&S.partners.speichen)a*=2;p.c=Math.min(100,p.c+a);toast(`🔧 ${p.name}: jetzt ${p.c} %`);after()}
+function scrap(id){const i=S.inv.findIndex(p=>p.id===id);if(i<0)return;const v=Math.round(partValue(S.inv[i])*0.4);S.money+=v;toast(`Für ${v} € an Kalle weitergegeben.`);S.inv.splice(i,1);after()}
+function buy(src,idx){const list=S.stock[src];const p=list[idx];if(!p)return;const pr=price(src,p);if(!pay(pr))return;S.inv.push(p);list.splice(idx,1);S.st.found++;toast(`${p.name} gekauft.`);after()}
+function price(src,p){const v=partValue(p);if(src==='laden')return Math.round(v*1.3);if(src==='rahmenbau')return Math.round(v*1.1);return Math.round(v*0.6*(S.friends.schrott>=6?0.8:1))+3}
+function buyGift(g){if(!pay(GIFTS[g].p))return;S.gifts[g]++;toast(`${GIFTS[g].e} ${GIFTS[g].n} eingepackt.`);after()}
+function dig(){if(S.today.dig>=3)return toast('Kalle sagt: Für heute reicht’s mit Wühlen.');if(!spend(2,2))return;S.today.dig++;const r=Math.random();
+  if(r<0.65){const p=makePart('schrott');S.inv.push(p);S.st.found++;showResult('Fund im Schrott',`<p>Unter einem Haufen Gepäckträger: <b>${p.name}</b>.</p>${partHTML(p)}`)}
+  else if(r<0.82){const g=pick(['kaffee','sticker','riegel']);S.gifts[g]++;showResult('Kleiner Fund',`<p>Ein ungeöffnetes ${GIFTS[g].e} ${GIFTS[g].n}. Ab in die Geschenke-Tasche.</p>`)}
+  else showResult('Nichts dabei','<p>Nur verbogene Schutzbleche. Morgen vielleicht.</p>');after()}
+function talk(w){const P=PEOPLE[w];let line=pick(P.lines),gain=0;
+  if(!S.today.talk[w]){S.today.talk[w]=1;if(S.friends[w]<3){S.friends[w]++;gain=1}}
+  const u=checkUnlocks(w);showResult(`${P.e} ${P.n}`,`<div class="say">${u||line}</div>${gain?'<p class="small muted">❤️ +1</p>':'<p class="small muted">Durch Reden steigt Freundschaft bis ❤️ 3. Danach helfen Geschenke.</p>'}`,{kind:'person',arg:w});after()}
+function giveGift(w,g){const P=PEOPLE[w];if(S.today.gift[w])return toast(`${P.n} hat heute schon ein Geschenk bekommen.`);if(!S.gifts[g])return toast('Davon hast du nichts mehr.');
+  S.gifts[g]--;S.today.gift[w]=1;S.st.gifts++;let d=1,msg='Danke, nett von dir.';
+  if(P.likes.includes(g)){d=2;msg='Oh, genau mein Ding! 😍';S.known[w+g]='mag'}else if(P.dislikes.includes(g)){d=0;msg='Hm. Naja. Danke trotzdem.';S.known[w+g]='mag nicht'}else S.known[w+g]='okay';
+  S.friends[w]=Math.min(10,S.friends[w]+d);const u=checkUnlocks(w);
+  showResult(`${P.e} ${P.n}`,`<div class="say">${msg}</div>${u?`<div class="say">${u}</div>`:''}<p class="small muted">❤️ +${d}</p>`,{kind:'person',arg:w});after()}
+function checkUnlocks(w){const f=S.friends[w];let out='';S.seen=S.seen||{};
+  for(const [lv,txt] of PEOPLE[w].unlock){const k=w+lv;if(f>=lv&&!S.seen[k]){S.seen[k]=1;out=txt;
+    if(w==='schrott'&&lv===3)S.secrets.tunnel=true;if(w==='sammler'&&lv===4)S.secrets.dachboden=true}}
+  return out}
+function train(sk){const lv=S.skill[sk];if(lv>=5)return toast('Schon Meisterniveau.');const c=Math.round(40*lv*(S.friends.ausbilder>=2?0.75:1));if(S.money<c)return toast(`Der Kurs kostet ${c} €.`);if(!spend(3,2))return;S.money-=c;S.skill[sk]++;
+  showResult('Kurs abgeschlossen',`<p>${SKILLN[sk][0]} ${SKILLN[sk][1]} jetzt auf Stufe <b>${S.skill[sk]}</b>.</p>`);after()}
+function coat(id,ci){const p=findPart(id);if(!p||p.type!=='rahmen')return;const c=S.partners.lack?35:60;if(S.money<c)return toast(`Pulverbeschichtung kostet ${c} €.`);if(!spend(3,1))return;S.money-=c;
+  const first=!p.color;p.color=COLORS[ci][0];p.c=100;let bonus='';if(first&&S.skill.coat>=3&&p.q<5){p.q++;bonus=' Perfektes Finish: +1 ★.'}S.st.coated++;S.tested=false;
+  showResult('Frisch beschichtet',`<p>Dein ${p.name} glänzt jetzt in ${COLORS[ci][1]}.${bonus}</p>${partHTML(p)}`);after()}
+function testRide(){if(!complete())return toast('Erst alle 6 Pflichtteile montieren.');const n=isNight();
+  if(n&&!S.bike.licht)return showResult('Probefahrt abgebrochen','<p>Stockdunkel. Ohne Licht kommst du nicht mal vom Hof. Bau ein Licht ein.</p>');
+  if(!spend(1,1))return;S.tested=true;const sc=bikeScore();const notes=[];
+  for(const p of bikeParts()){if(p.c<40&&Math.random()<0.5){p.c=Math.max(5,p.c-15);notes.push(`${TYPES[p.type]} machen Geräusche (${p.c} %).`)}}
+  let extra='';if(n){S.st.nightRide++;if(!S.secrets.bruecke&&(S.st.nightRide>=2||Math.random()<0.5)){S.secrets.bruecke=true;extra='<div class="say">🌉 Unter der Kanalbrücke flackert Licht. Dort stapeln sich alte Rahmen! Neuer geheimer Ort entdeckt.</div>'}}
+  else S.st.dayRide++;
+  const verdict=sc>=80?'Fährt sich wie auf Schienen.':sc>=60?'Solide. Ein paar Teile könnten besser sein.':sc>=40?'Rollt, klappert, quietscht.':'Hält gerade so zusammen.';
+  showResult(n?'🌙 Nachtfahrt':'☀️ Probefahrt',`<p><b>Fahrgefühl ${sc}/100.</b> ${verdict}</p>${notes.map(x=>`<p class="small">⚠️ ${x}</p>`).join('')}${extra}<p class="small muted">Getestete Räder verkaufen sich 15 % teurer.</p>`);after()}
+function salePrice(to){const v=bikeValue();if(to==='markt')return Math.round(v*1.1+S.rep*2);if(to==='sammler')return Math.round(v*1.6+S.friends.sammler*12);if(to==='polo')return Math.round(v*1.4+S.friends.polo*(S.friends.polo>=6?15:6));return 0}
+function canSell(to){if(!complete())return'Rad ist nicht komplett.';if(to==='sammler'){if(S.friends.sammler<3)return'Herr Albrecht kennt dich noch nicht gut genug (❤️ 3).';if(tagCount('vintage')<2&&bikeScore()<75)return'Er will mindestens 2 Vintage-Teile oder Fahrgefühl ab 75.'}
+  if(to==='polo'&&tagCount('polo')<3)return'Mo braucht mindestens 3 Polo-Teile.';return''}
+function sell(to){const why=canSell(to);if(why)return toast(why);if(!spend(1,0))return;const pr=salePrice(to);const sc=bikeScore();S.money+=pr;const r=2+Math.round(sc/25);S.rep+=r;S.st.sold++;
+  if(to==='sammler'){S.friends.sammler=Math.min(10,S.friends.sammler+1);if(pr>=300)S.st.bigSale++}if(to==='polo')S.friends.polo=Math.min(10,S.friends.polo+1);
+  S.bike={};S.tested=false;showResult('Verkauft! 💶',`<p>Du bekommst <b>${pr} €</b> und ⭐ +${r} Ruf. Die Werkbank ist frei für das nächste Projekt.</p>`);after()}
+function explore(k){if(S.today.sec[k])return toast('Hier warst du heute schon.');if(!isOpen(k))return toast('Jetzt kommst du hier nicht rein.');if(!spend(2,2))return;S.today.sec[k]=1;const found=[];
+  if(k==='tunnel'){found.push(makePart('geheim'));if(Math.random()<0.35)found.push(makePart('schrott'))}
+  if(k==='bruecke'){found.push(makePart('geheim','rahmen'));if(Math.random()<0.4)S.gifts.glocke++,found.push(null)}
+  if(k==='dachboden'){found.push(makePart('vintage'))}
+  let h='';for(const p of found){if(p){S.inv.push(p);S.st.found++;h+=partHTML(p)}else h+='<p>Außerdem: 🔔 eine Vintage-Klingel!</p>'}
+  showResult(`${PLACES[k].e} ${PLACES[k].n}`,`<p>Mit der Taschenlampe durch Staub und Spinnweben…</p>${h}`);after()}
+function joinPartner(k){const P=PARTNERS[k];if(S.partners[k])return;if(S.rep<P.rep)return toast(`Du brauchst ⭐ ${P.rep} Ruf.`);if(!pay(P.cost))return;S.partners[k]=true;showResult(`${P.e} ${P.n}`,`<p>Handschlag! Ab jetzt: ${P.perk} Dazu jeden Morgen +${P.inc} € Beteiligung.</p>`);after()}
+function runEvent(id){const ev=EVENTS.find(e=>e.id===id);const why=eventBlock(ev);if(why)return toast(why);if(!spend(3,3))return;S.money-=ev.fee;S.today.ev[id]=1;
+  const m=tagCount(ev.tag);let perf=bikeScore()*0.55+m*7+S.skill.ride*5+rnd(0,25)+(S.tested?3:0)+(ev.coat&&S.bike.rahmen.color?8:0);perf=Math.round(perf);
+  const place=perf>=88?1:perf>=74?2:perf>=60?3:0;for(const p of bikeParts())p.c=Math.max(5,p.c-rnd(3,12));
+  let h=`<div class="place-medal">${['😤','🥇','🥈','🥉'][place]}</div><p style="text-align:center"><b>${place?`Platz ${place}!`:'Leider kein Podest.'}</b><br><span class="muted small">Leistung ${perf} Punkte</span></p>`;
+  if(place){const pr=ev.prize[place-1],r=ev.rep[place-1];S.money+=pr;S.rep+=r;S.st.podium++;h+=`<p>Preisgeld <b>${pr} €</b>, Ruf ⭐ +${r}.</p>`;
+    if(place===1){S.st.wins++;const t=makePart('geheim');t.tags=[...new Set([...t.tags,ev.tag])];S.inv.push(t);h+=`<p>Siegerpreis aus der Teilekiste:</p>${partHTML(t)}`}}
+  else h+='<p class="small">Tipp: Mehr passende Teile, bessere Teile, Training bei Meisterin Petra.</p>';
+  h+='<p class="small muted">Das Rennen hat am Material gezehrt.</p>';showResult(`${ev.e} ${ev.n}`,h);after()}
+function eventBlock(ev){if(S.today.ev[ev.id])return'Heute schon gestartet.';if(ev.req&&!ev.req())return ev.reqT;if(ev.night!==isNight())return ev.night?'Startet erst ab 20 Uhr.':'Läuft nur tagsüber.';
+  if(!complete())return'Du brauchst ein komplettes Rad.';if(ev.light&&!S.bike.licht)return'Ohne Licht wirst du disqualifiziert.';if(S.money<ev.fee)return`Startgeld ${ev.fee} € fehlt.`;if(S.energy<3)return'Zu wenig Energie (3 nötig).';return''}
+function claim(id){const q=QUESTS.find(x=>x.id===id);if(S.claimed[id]||!q.c())return;S.claimed[id]=1;S.money+=q.r[0];S.rep+=q.r[1];toast(`🎉 ${q.t}: +${q.r[0]} €, ⭐ +${q.r[1]}`);after()}
+function sleep(){let inc=0;for(const k in S.partners)inc+=PARTNERS[k].inc;S.money+=inc;S.day++;S.hour=8;S.energy=S.maxE;S.today={talk:{},gift:{},ev:{},sec:{},dig:0};newStock();
+  toast(`Tag ${S.day} beginnt 🌅${inc?` +${inc} € von Partnern`:''}`);after()}
+function resetGame(){if(!confirm('Spielstand wirklich löschen und neu anfangen?'))return;S=fresh();start();closeSheet();after()}
+
+/* ---------- Darstellung ---------- */
+function stars(q){return'★'.repeat(q)+'<span class="dim">'+'★'.repeat(5-q)+'</span>'}
+function condBar(c){const col=c>70?'var(--good)':c>40?'var(--warn)':'var(--red)';return`<span class="bar"><i style="width:${c}%;background:${col}"></i></span>`}
+function partHTML(p,acts=''){return`<div class="part"><div class="pt"><b>${p.color?`<span class="dot" style="background:${p.color}"></span>`:''}${p.name}</b><span class="muted small">${TYPES[p.type]}</span></div>
+<div class="pm"><span class="stars" aria-label="${p.q} von 5 Sternen">${stars(p.q)}</span>${condBar(p.c)}<span class="small">${p.c} %</span><span class="small muted">Wert ${partValue(p)} €</span></div>
+<div class="tags">${p.tags.map(t=>`<span class="tag t-${t}">${TAGN[t]}</span>`).join('')}</div>${acts?`<div class="acts">${acts}</div>`:''}</div>`}
+function hearts(n){return'❤️'.repeat(Math.min(n,10))+'<span class="dim">'+'🤍'.repeat(10-Math.min(n,10))+'</span>'}
+
+function bikeSVG(){const b=S.bike,n=isNight();const G='stroke="var(--muted)" stroke-dasharray="5 6" stroke-width="2.5" fill="none" opacity=".55"';
+  const RA=[80,130],FA=[244,130],BB=[152,134],ST=[134,64],HT=[220,62],HB=[226,86];
+  let s=`<svg class="bike" viewBox="0 0 330 185" role="img" aria-label="Dein Fahrrad auf der Werkbank">`;
+  if(n&&b.licht)s+=`<polygon points="238,70 330,46 330,124" fill="#ffe08a" opacity=".35"/>`;
+  const wheel=([x,y])=>{if(!b.laufrad)return`<circle cx="${x}" cy="${y}" r="46" ${G}/>`;let w=`<circle cx="${x}" cy="${y}" r="46" fill="none" stroke="#222" stroke-width="7"/><circle cx="${x}" cy="${y}" r="40" fill="none" stroke="#9aa" stroke-width="2"/>`;
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;w+=`<line x1="${x}" y1="${y}" x2="${x+39*Math.cos(a)}" y2="${y+39*Math.sin(a)}" stroke="#9aa" stroke-width="1"/>`}return w+`<circle cx="${x}" cy="${y}" r="4" fill="#666"/>`};
+  s+=wheel(RA)+wheel(FA);
+  const L=(a,c)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${c[0]}" y2="${c[1]}"`;
+  const segs=[[BB,ST],[ST,HT],[BB,HB],[BB,RA],[ST,RA],[HT,HB],[HB,FA]];
+  if(b.rahmen){const fc=b.rahmen.color||'#8d8a84';s+=segs.map(([a,c])=>`${L(a,c)} stroke="${fc}" stroke-width="7" stroke-linecap="round"/>`).join('')}
+  else s+=segs.map(([a,c])=>`${L(a,c)} ${G}/>`).join('');
+  if(b.antrieb){s+=`<line x1="152" y1="120" x2="80" y2="123" stroke="#555" stroke-width="2"/><line x1="152" y1="148" x2="80" y2="137" stroke="#555" stroke-width="2"/><circle cx="152" cy="134" r="14" fill="none" stroke="#444" stroke-width="4"/><circle cx="80" cy="130" r="7" fill="none" stroke="#444" stroke-width="3"/><line x1="152" y1="134" x2="164" y2="156" stroke="#444" stroke-width="4" stroke-linecap="round"/>`}
+  else s+=`<circle cx="152" cy="134" r="14" ${G}/>`;
+  if(b.bremse)s+=`<rect x="96" y="92" width="10" height="6" rx="2" fill="var(--blue)"/><rect x="226" y="98" width="10" height="6" rx="2" fill="var(--blue)"/>`;
+  if(b.lenker){const t=b.lenker.tags;let d;if(t.includes('rennen')||t.includes('gravel'))d='M220,62 L224,46 L242,46 Q256,48 251,64 Q246,74 237,70';else if(t.includes('stadt'))d='M220,62 L224,44 Q214,40 204,48';else d='M220,62 L224,44 M210,44 L240,42';
+    s+=`<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>`}else s+=`<path d="M220,62 L224,46 L242,46" ${G}/>`;
+  if(b.sattel)s+=`<line x1="134" y1="64" x2="132" y2="56" stroke="#555" stroke-width="4"/><path d="M114,55 Q130,46 152,52 L150,57 Q132,57 114,59Z" fill="${b.sattel.tags.includes('vintage')?'#8a5a2b':'var(--ink)'}"/>`;
+  else s+=`<path d="M114,55 Q130,46 152,52" ${G}/>`;
+  if(b.licht)s+=`<rect x="228" y="64" width="11" height="9" rx="2" fill="${n?'#ffe08a':'#e8c547'}" stroke="#444"/>`;
+  return s+'</svg>'}
+
+function renderTop(){const n=isNight();document.body.classList.toggle('night',n);
+  document.getElementById('top').innerHTML=`<div class="hrow"><div class="clock">${n?'🌙':'☀️'} ${fmtH(S.hour)} <small>Tag ${S.day}</small></div>
+  <div class="stats"><span class="pill">💶 ${S.money} €</span><span class="pill">⭐ ${S.rep}</span></div></div>
+  <div class="hrow" style="margin-top:8px"><div class="energy">⚡<span class="ebar"><i style="width:${S.energy/S.maxE*100}%"></i></span>${S.energy}/${S.maxE}</div><button class="sleep" onclick="sleep()">😴 Schlafen</button></div>`}
+
+function renderNav(){const open=QUESTS.filter(q=>q.c()&&!S.claimed[q.id]).length;const T=[['werk','🔧','Werkstatt'],['stadt','🗺️','Stadt'],['leute','👥','Leute'],['quests','📋','Aufgaben',open],['events','🏁','Events']];
+  document.getElementById('nav').innerHTML=T.map(([k,e,l,b])=>`<button class="${S.tab===k?'on':''}" onclick="go('${k}')" aria-current="${S.tab===k}"><span>${e}</span>${l}${b?`<i class="badge">${b}</i>`:''}</button>`).join('')}
+function go(t){S.tab=t;save();render();window.scrollTo(0,0)}
+
+function renderWerk(){const sc=bikeScore(),[pt,pn]=profile();let h=`<div class="bench">${bikeSVG()}</div>`;
+  h+=`<section class="block"><div class="bikemeta"><span class="score">${complete()?sc:'–'}</span><span class="muted small">${complete()?'Fahrgefühl von 100':'Noch nicht fahrbereit'}</span>
+  ${pt?`<span class="tag t-${pt}">${TAGN[pt]}-Rad (${pn} Teile)</span>`:''}${S.tested?'<span class="tag">✅ getestet</span>':''}</div>
+  <div class="acts"><button class="btn hi" onclick="testRide()" ${complete()?'':'disabled'}>${isNight()?'🌙 Nachtfahrt':'☀️ Probefahrt'}</button>
+  <button class="btn" onclick="sell('markt')" ${complete()?'':'disabled'}>Online verkaufen${complete()?` · ${salePrice('markt')} €`:''}</button></div>
+  <p class="small muted">Sammler und Polo-Spielerin zahlen mehr. Besuch sie in der Stadt.</p></section>`;
+  h+=`<section class="block"><h2>Am Rad</h2>`;for(const t of [...REQ,'licht']){const p=S.bike[t];
+    if(p)h+=partHTML(p,`<button class="btn" onclick="repair(${p.id})">🔧 Reparieren (5 €, 1 h)</button><button class="btn" onclick="uninstall('${t}')">Ausbauen</button>`);
+    else{const c=S.inv.filter(x=>x.type===t).length;h+=`<div class="empty"><span><b>${TYPES[t]}</b> <span class="muted small">${t==='licht'?'optional, nachts Pflicht':'fehlt'}</span></span>${c?`<button class="btn main" onclick="openSheet('pick','${t}')">Montieren (${c})</button>`:'<span class="small muted">Nicht auf Lager</span>'}</div>`}}
+  h+=`</section><section class="block"><h2>Teilelager</h2>`;
+  if(!S.inv.length)h+='<p class="muted">Leer. Schau auf dem Schrottplatz oder im Laden vorbei.</p>';
+  for(const p of [...S.inv].sort((a,b)=>a.type.localeCompare(b.type)))h+=partHTML(p,`<button class="btn main" onclick="install(${p.id})">Montieren</button><button class="btn" onclick="repair(${p.id})">🔧 Reparieren</button><button class="btn" onclick="scrap(${p.id})">Abgeben · ${Math.round(partValue(p)*0.4)} €</button>`);
+  h+=`</section><section class="block"><h2>Geschenke-Tasche</h2><div class="giftrow">${Object.keys(GIFTS).map(g=>`<span class="tag">${GIFTS[g].e} ${GIFTS[g].n} × ${S.gifts[g]}</span>`).join('')}</div></section>`;
+  h+=`<section class="block"><h2>Fähigkeiten</h2>${Object.keys(SKILLN).map(k=>`<p>${SKILLN[k][0]} ${SKILLN[k][1]}: ${stars(S.skill[k])}</p>`).join('')}</section>`;
+  return h}
+
+function renderStadt(){let h=`<h2 style="margin:16px 0 4px">Die Stadt</h2><p class="muted small">Öffnungszeiten beachten. Manche Orte gibt’s nur nachts.</p><div class="grid">`;
+  for(const k in PLACES){const p=PLACES[k];
+    if(p.secret&&!S.secrets[k]){h+=`<button class="place secret" onclick="toast('${p.hint}')"><span class="em">❓</span><b>Geheimer Ort</b><span class="small muted">${p.hint}</span></button>`;continue}
+    const o=isOpen(k);h+=`<button class="place ${o?'':'closed'}" onclick="openSheet('place','${k}')"><span class="em">${p.e}</span><b>${p.n}</b><span class="status ${o?'open':'shut'}">${o?'Geöffnet':'Geschlossen'} ${p.night?'(nur nachts)':p.open[1]>24?'':`(${p.open[0]}–${p.open[1]} Uhr)`}</span><span class="small muted">${p.d||'Geheim. Psst.'}</span></button>`}
+  return h+'</div>'}
+
+function renderLeute(){let h='<h2 style="margin:16px 0 8px">Leute</h2>';
+  for(const w in PEOPLE){const P=PEOPLE[w],pl=PLACES[P.place];const likes=Object.keys(GIFTS).filter(g=>S.known[w+g]).map(g=>`${GIFTS[g].e} ${S.known[w+g]}`).join(', ');
+    const next=P.unlock.find(([lv])=>S.friends[w]<lv);
+    h+=`<section class="block"><div class="person"><div class="avatar">${P.e}</div><div style="flex:1"><h3>${P.n}</h3><div class="muted small">${P.role}, ${pl.n}</div>
+    <div class="hearts" aria-label="Freundschaft ${S.friends[w]} von 10">${hearts(S.friends[w])}</div>
+    <p class="small">${likes?`Geschenke: ${likes}`:'Was mag ${P.n}? Probier ein Geschenk aus.'.replace('${P.n}',P.n)}</p>
+    ${next?`<p class="small muted">Bei ❤️ ${next[0]} passiert etwas.</p>`:''}
+    <div class="acts"><button class="btn main" onclick="openSheet('place','${P.place}')">Besuchen</button></div></div></div></section>`}
+  return h}
+
+function renderQuests(){let h='<section class="block"><h2>Aufgaben</h2>';
+  for(const q of QUESTS){const ok=q.c(),cl=S.claimed[q.id];h+=`<div class="quest ${cl?'done':''}"><span class="check">${cl?'✅':ok?'🎁':'⬜'}</span><div style="flex:1"><b>${q.t}</b><div class="small muted">${q.d} Belohnung ${q.r[0]} €, ⭐ ${q.r[1]}</div></div>${ok&&!cl?`<button class="btn hi" onclick="claim('${q.id}')">Abholen</button>`:''}</div>`}
+  h+=`</section><section class="block"><h2>Partnerwerkstätten</h2>${Object.keys(PARTNERS).map(k=>`<p>${PARTNERS[k].e} <b>${PARTNERS[k].n}</b> ${S.partners[k]?'✅ Partner':`<span class="muted small">ab ⭐ ${PARTNERS[k].rep}</span>`}</p>`).join('')}<p class="small muted">Beitreten im Werkstatt-Verbund (Stadt).</p></section>
+  <p style="text-align:center"><button class="btn" onclick="resetGame()">Neues Spiel starten</button></p>`;return h}
+
+function renderEvents(){let h='<h2 style="margin:16px 0 4px">Sport-Events</h2><p class="muted small">Jedes Event einmal pro Tag. Kostet 3 Stunden und ⚡ 3. Passende Teile zählen am meisten.</p>';
+  for(const ev of EVENTS){const why=eventBlock(ev),m=tagCount(ev.tag);
+    h+=`<div class="event"><h3>${ev.e} ${ev.n}</h3><p class="small">${ev.d}</p><div class="tags"><span class="tag t-${ev.tag}">braucht ${TAGN[ev.tag]}-Teile: du hast ${m}</span><span class="tag">${ev.night?'🌙 nachts':'☀️ tagsüber'}</span><span class="tag">Startgeld ${ev.fee} €</span><span class="tag">🥇 ${ev.prize[0]} €</span>${ev.coat?'<span class="tag">Bonus für Pulverlack</span>':''}</div>
+    <div class="acts"><button class="btn ${why?'':'hi'}" onclick="runEvent('${ev.id}')" ${why?'disabled':''}>Starten</button>${why?`<span class="small muted" style="align-self:center">${why}</span>`:''}</div></div>`}
+  return h}
+
+function render(){renderTop();renderNav();const m=document.getElementById('main');
+  m.innerHTML={werk:renderWerk,stadt:renderStadt,leute:renderLeute,quests:renderQuests,events:renderEvents}[S.tab]()}
+
+/* ---------- Sheets ---------- */
+let SH=null;
+function openSheet(kind,arg){SH={kind,arg};document.getElementById('sheet').classList.remove('hidden');renderSheet()}
+function closeSheet(){SH=null;document.getElementById('sheet').classList.add('hidden')}
+function showResult(title,html,back){SH={kind:'result',title,html,back};document.getElementById('sheet').classList.remove('hidden');renderSheet()}
+function personBox(w){const P=PEOPLE[w];const gifts=Object.keys(GIFTS).filter(g=>S.gifts[g]>0);
+  return`<div class="person" style="margin:6px 0 12px"><div class="avatar">${P.e}</div><div style="flex:1"><b>${P.n}</b> <span class="muted small">${P.role}</span><div class="hearts">${hearts(S.friends[w])}</div>
+  <div class="acts"><button class="btn main" onclick="talk('${w}')">💬 Reden</button>${gifts.map(g=>`<button class="btn" onclick="giveGift('${w}','${g}')">${GIFTS[g].e} schenken (${S.gifts[g]})</button>`).join('')}</div>
+  ${gifts.length?'':'<p class="small muted">Keine Geschenke in der Tasche. Der Fahrradladen hat welche.</p>'}</div></div>`}
+function renderSheet(){if(!SH)return;const T=document.getElementById('sheetT'),B=document.getElementById('sheetB');
+  if(SH.kind==='intro'){T.textContent='Willkommen bei Speiche & Schrott';B.innerHTML=`<p>Du hast eine kleine Hinterhofwerkstatt übernommen. Auf der Werkbank liegt ein rostiger Hollandrahmen.</p>
+    <p>🧲 Sammle Teile bei Kalle auf dem Schrottplatz und im Laden.<br>🔧 Repariere, montiere, lass Rahmen pulverbeschichten.<br>☀️🌙 Fahr Probe, tagsüber und nachts.<br>🎁 Freunde dich mit Kalle, Mo, Herrn Albrecht und Meisterin Petra an.<br>❓ Finde geheime Orte, werde Partner von Werkstätten und gewinne Sport-Events.</p>
+    <p class="small muted">Jede Aktion kostet Zeit und Energie. Schlafen startet einen neuen Tag. Dein Spielstand wird in diesem Browser gespeichert.</p><button class="btn hi" onclick="closeSheet()">Los geht’s</button>`;return}
+  if(SH.kind==='result'){T.textContent=SH.title;B.innerHTML=SH.html+`<div class="acts">${SH.back?`<button class="btn" onclick="openSheet('place','${PEOPLE[SH.back.arg].place}')">Zurück</button>`:''}<button class="btn main" onclick="closeSheet()">Weiter</button></div>`;return}
+  if(SH.kind==='pick'){const t=SH.arg;T.textContent=`${TYPES[t]} montieren`;B.innerHTML=S.inv.filter(p=>p.type===t).map(p=>partHTML(p,`<button class="btn main" onclick="install(${p.id})">Dieses montieren</button>`)).join('');return}
+  if(SH.kind==='place'){const k=SH.arg,p=PLACES[k],o=isOpen(k);T.textContent=`${p.e} ${p.n}`;let h='';
+    if(!o){B.innerHTML=`<p>Gerade geschlossen. ${p.night?'Komm nach 20 Uhr wieder.':`Geöffnet von ${p.open[0]} bis ${p.open[1]} Uhr.`}</p><p class="small muted">Es ist ${fmtH(S.hour)}.</p>`;return}
+    if(p.who)h+=personBox(p.who);
+    if(k==='laden'){h+='<h3>Neuteile</h3>'+(S.stock.laden.map((x,i)=>partHTML(x,`<button class="btn main" onclick="buy('laden',${i})">Kaufen · ${price('laden',x)} €</button>`)).join('')||'<p class="muted">Ausverkauft bis morgen.</p>');
+      h+='<h3 style="margin-top:12px">Geschenke</h3><div class="acts">'+Object.keys(GIFTS).map(g=>`<button class="btn" onclick="buyGift('${g}')">${GIFTS[g].e} ${GIFTS[g].n} · ${GIFTS[g].p} €</button>`).join('')+'</div>'}
+    if(k==='schrott'){h+=`<div class="acts"><button class="btn hi" onclick="dig()">🧲 Im Schrott wühlen (2 h, ⚡2) · noch ${3-S.today.dig}×</button></div><h3 style="margin-top:12px">Kalles Angebote</h3>`+(S.stock.schrott.map((x,i)=>partHTML(x,`<button class="btn main" onclick="buy('schrott',${i})">Kaufen · ${price('schrott',x)} €</button>`)).join('')||'<p class="muted">Kalle hat nichts mehr. Morgen kommt neuer Schrott.</p>')}
+    if(k==='court'){const w=canSell('polo');h+=`<h3>Rad an Mo verkaufen</h3><p class="small">${w||`Mo bietet <b>${salePrice('polo')} €</b>.`}</p><button class="btn hi" onclick="sell('polo')" ${w?'disabled':''}>An Mo verkaufen</button>`}
+    if(k==='villa'){const w=canSell('sammler');h+=`<h3>Rad an Herrn Albrecht verkaufen</h3><p class="small">${w||`Er bietet <b>${salePrice('sammler')} €</b>.`}</p><button class="btn hi" onclick="sell('sammler')" ${w?'disabled':''}>An Herrn Albrecht verkaufen</button>`}
+    if(k==='schule'){h+='<h3>Kurse (3 h, ⚡2)</h3>'+Object.keys(SKILLN).map(s=>{const lv=S.skill[s],c=Math.round(40*lv*(S.friends.ausbilder>=2?0.75:1));return`<div class="part"><b>${SKILLN[s][0]} ${SKILLN[s][1]}</b> ${stars(lv)}<div class="small muted">${{repair:'Repariert mehr Zustand pro Durchgang.',coat:'Ab Stufe 3 gibt die erste Beschichtung +1 ★.',ride:'Mehr Leistung bei Sport-Events.'}[s]}</div><div class="acts"><button class="btn main" onclick="train('${s}')" ${lv>=5?'disabled':''}>${lv>=5?'Meister':`Kurs belegen · ${c} €`}</button></div></div>`}).join('')}
+    if(k==='lack'){const frames=[S.bike.rahmen,...S.inv.filter(x=>x.type==='rahmen')].filter(Boolean);const c=S.partners.lack?35:60;
+      h+=`<p class="small">Pulverbeschichtung: ${c} €, 3 Stunden. Rahmen wird wie neu, Wert +30 %.</p>`;
+      h+=frames.length?frames.map(f=>partHTML(f)+`<div class="swatches">${COLORS.map((col,i)=>`<button class="sw" style="background:${col[0]}" title="${col[1]}" aria-label="${col[1]}" onclick="coat(${f.id},${i})"></button>`).join('')}</div>`).join(''):'<p class="muted">Du hast keinen Rahmen dabei.</p>'}
+    if(k==='partner'){h+=Object.keys(PARTNERS).map(pk=>{const P=PARTNERS[pk];return`<div class="part"><b>${P.e} ${P.n}</b><div class="small">${P.perk} Täglich +${P.inc} €.</div><div class="acts">${S.partners[pk]?'<span class="tag">✅ Partner</span>':`<button class="btn main" onclick="joinPartner('${pk}')" ${S.rep<P.rep?'disabled':''}>Beitreten · ${P.cost} € (ab ⭐ ${P.rep})</button>`}</div></div>`}).join('');
+      if(S.partners.rahmenbau)h+='<h3 style="margin-top:12px">Rahmenbau Nord</h3>'+(S.stock.rahmenbau.map((x,i)=>partHTML(x,`<button class="btn main" onclick="buy('rahmenbau',${i})">Kaufen · ${price('rahmenbau',x)} €</button>`)).join('')||'<p class="muted">Ausverkauft.</p>')}
+    if(p.secret)h+=`<p>${{tunnel:'Feucht, dunkel, voller alter Bahnmeisterei-Kisten.',bruecke:'Zwischen den Pfeilern lagern Rahmen aus besseren Zeiten.',dachboden:'Staub, Tauben und ein Hauch von Rennstall.'}[k]}</p><button class="btn hi" onclick="explore('${k}')" ${S.today.sec[k]?'disabled':''}>${S.today.sec[k]?'Heute schon durchsucht':'Durchsuchen (2 h, ⚡2)'}</button>`;
+    B.innerHTML=h}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+
+/* ---------- Start ---------- */
+function start(){newStock();const f=makePart('x','rahmen');f.name='Hollandrahmen';f.tags=['stadt','vintage'];f.q=2;f.c=30;S.inv.push(f);const s=makePart('x','sattel');S.inv.push(s)}
+S=load();if(!S){S=fresh();start()}
+render();if(S.intro){S.intro=false;save();openSheet('intro')}
+</script>
+</body>
+</html>
