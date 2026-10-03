@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Die Wort-Insel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
+<style>
+/* Layout: oben die Insel als 16:10-Bühne, unten das Spielfeld mit Bildkarte und Buchstaben-Steinen */
+:root{
+  --bg:#e9f4f2;
+  --panel:#fffdf7;
+  --ink:#33302b;
+  --muted:#7b8a86;
+  --accent:#f07a2a;
+  --accent-ink:#ffffff;
+  --good:#2f9e5b;
+  --tile:#fffaf0;
+  --tile-edge:#e6c08f;
+  --card:#ffffff;
+  --card-edge:#d9e6e3;
+  --bubble:#ffffff;
+  --bubble-ink:#33302b;
+  --overlay:rgba(24,48,52,.62);
+  --shade:rgba(40,60,60,.18);
+  --font-ui:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+  --font-letter:"Andika","Comic Sans MS","Trebuchet MS",sans-serif;
+  --panel-h:320px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16242a; --panel:#1f3138; --ink:#f2ede4; --muted:#9fb2b0;
+    --tile:#2a4049; --tile-edge:#5d7f86; --card:#263b43; --card-edge:#3a565e;
+    --bubble:#fffdf7; --bubble-ink:#33302b;
+    --overlay:rgba(5,14,18,.72); --shade:rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16242a; --panel:#1f3138; --ink:#f2ede4; --muted:#9fb2b0;
+  --tile:#2a4049; --tile-edge:#5d7f86; --card:#263b43; --card-edge:#3a565e;
+  --bubble:#fffdf7; --bubble-ink:#33302b;
+  --overlay:rgba(5,14,18,.72); --shade:rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+@media (min-width:700px) and (min-aspect-ratio:5/4){ :root{ --panel-h:240px; } }
+@media (max-height:640px) and (max-aspect-ratio:5/4){ :root{ --panel-h:270px; } }
+
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-ui);
+  padding-inline:16px; padding-block:10px; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  overflow:hidden; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit; color:inherit}
+button:focus-visible{outline:3px solid var(--accent); outline-offset:3px}
+
+/* ---------- Insel ---------- */
+#scene{
+  position:relative; flex:none; aspect-ratio:16/10; max-width:100%;
+  width:min(100%, calc((100dvh - var(--panel-h) - 40px) * 1.6));
+  border-radius:22px; overflow:hidden; box-shadow:0 8px 0 var(--shade);
+  --sky1:#6f7c8c; --sky2:#aab3bd; --sea1:#4b6b7d; --sea2:#2f4f62; --u:6px;
+}
+#scene svg.bg{position:absolute; inset:0; width:100%; height:100%; display:block}
+.waves{animation:waves 7s linear infinite}
+.waves.w2{animation-duration:11s; animation-direction:reverse}
+@keyframes waves{from{transform:translateX(0)} to{transform:translateX(-20px)}}
+
+.obj{
+  position:absolute; transform:translate(-50%,-100%); line-height:1; padding:0; margin:0;
+  background:none; border:0; cursor:pointer; font-size:calc(var(--u) * var(--s));
+}
+.obj .pop{display:block}
+.obj .pop.new{animation:pop .7s cubic-bezier(.2,1.6,.4,1) both}
+.obj .inner{display:block; transform-origin:50% 100%}
+.obj.wiggle .inner{animation:wiggle .5s ease}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg)} 100%{transform:scale(1) rotate(0)}}
+@keyframes wiggle{25%{transform:rotate(-12deg) scale(1.1)} 75%{transform:rotate(10deg) scale(1.1)}}
+.a-spin .inner{animation:spin 30s linear infinite; transform-origin:50% 50%}
+.a-drift .inner{animation:drift 9s ease-in-out infinite alternate}
+.a-sway .inner{animation:sway 4s ease-in-out infinite alternate}
+.a-bob .inner{animation:bob 3s ease-in-out infinite}
+.a-swim .inner{animation:swim 6s ease-in-out infinite alternate}
+.a-jump .inner{animation:jump 5s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes drift{to{transform:translateX(35%)}}
+@keyframes sway{from{transform:rotate(-2deg)} to{transform:rotate(2deg)}}
+@keyframes bob{50%{transform:translateY(-8%) rotate(3deg)}}
+@keyframes swim{to{transform:translateX(60%) scaleX(1)}}
+@keyframes jump{0%,70%,100%{transform:translateY(0) rotate(0)} 82%{transform:translateY(-45%) rotate(-20deg)}}
+svg.swing .seat{animation:swing 2.6s ease-in-out infinite alternate; transform-origin:50px 14px}
+@keyframes swing{from{transform:rotate(-14deg)} to{transform:rotate(14deg)}}
+
+.storm{position:absolute; font-size:calc(var(--u) * 11); filter:grayscale(1) brightness(.62); transition:opacity 1.5s; pointer-events:none; line-height:1}
+.storm.s1{left:8%; top:4%} .storm.s2{left:40%; top:-2%} .storm.s3{left:68%; top:6%}
+
+#fritzi{position:absolute; left:17%; top:77%; --s:8; z-index:7}
+#fritzi .inner{animation:bob 2.4s ease-in-out infinite}
+#bubble{
+  position:absolute; left:3%; top:max(15%, 36px); max-width:52%; z-index:20;
+  background:var(--bubble); color:var(--bubble-ink); border-radius:16px; padding:.55em .8em;
+  font-size:clamp(12px, calc(var(--u) * 2.1), 20px); line-height:1.3; font-weight:500;
+  box-shadow:0 4px 0 rgba(0,0,0,.15); transition:opacity .3s, transform .3s; transform-origin:20% 100%;
+}
+#bubble::after{content:""; position:absolute; left:22%; bottom:-10px; border:10px solid transparent; border-bottom:0; border-top-color:var(--bubble)}
+#bubble.off{opacity:0; transform:scale(.8)}
+
+#parentBtn{
+  position:absolute; right:10px; top:10px; z-index:30; border:0; border-radius:999px;
+  background:rgba(255,255,255,.75); color:#33302b; font-size:14px; padding:6px 12px; cursor:pointer;
+}
+#fsBtn{
+  position:absolute; right:58px; top:10px; z-index:30; border:0; border-radius:999px;
+  background:rgba(255,255,255,.75); color:#33302b; font-size:14px; padding:6px 12px; cursor:pointer;
+}
+#counter{
+  position:absolute; left:10px; top:10px; z-index:30; border-radius:999px;
+  background:rgba(255,255,255,.75); color:#33302b; font-size:14px; padding:6px 12px; font-variant-numeric:tabular-nums;
+}
+
+/* ---------- Spielfeld ---------- */
+#panel{
+  flex:1 1 auto; min-height:0; width:100%; max-width:900px; box-sizing:border-box;
+  display:flex; align-items:center; justify-content:center;
+}
+.view{display:flex; align-items:center; justify-content:center; gap:18px; width:100%}
+#idle,#end{flex-direction:column; gap:12px; text-align:center}
+.big{
+  border:0; border-radius:999px; background:var(--accent); color:var(--accent-ink);
+  font-size:clamp(22px, 5vw, 32px); font-weight:700; padding:.5em 1.4em; cursor:pointer;
+  box-shadow:0 6px 0 #b9541a; transition:transform .1s;
+}
+.big:active{transform:translateY(4px); box-shadow:0 2px 0 #b9541a}
+.big.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.ghost{border:2px solid var(--card-edge); background:transparent; border-radius:999px; padding:.4em 1.1em; font-size:18px; cursor:pointer; color:var(--ink)}
+.hint{color:var(--muted); font-size:15px; margin:0}
+
+#play{flex-direction:column}
+@media (min-width:700px) and (min-aspect-ratio:5/4){ #play{flex-direction:row; gap:36px} }
+.stars{display:flex; gap:6px; font-size:22px}
+@media (min-width:700px) and (min-aspect-ratio:5/4){ .stars{flex-direction:column; font-size:20px} }
+.stars span{opacity:.22; filter:grayscale(1); transition:all .4s}
+.stars span.on{opacity:1; filter:none; animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+
+#card{
+  background:var(--card); border:3px solid var(--card-edge); border-radius:22px;
+  width:170px; display:flex; flex-direction:column; align-items:center; padding:10px 8px 8px;
+  box-shadow:0 6px 0 var(--shade); cursor:pointer; transition:transform .2s, border-color .2s; box-sizing:border-box;
+}
+@media (max-height:700px) and (max-aspect-ratio:5/4){ #card{width:140px} #cardPic{font-size:72px!important} }
+#card.target{transform:scale(1.07); border-color:var(--accent)}
+#card.solved{border-color:var(--good)}
+#card.enter{animation:cardIn .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes cardIn{from{transform:translateY(40px) rotate(-6deg); opacity:0}}
+#cardPic{font-size:92px; line-height:1.1; height:1.1em; display:flex; align-items:center; justify-content:center}
+#cardWord{font-family:var(--font-letter); font-size:30px; font-weight:700; letter-spacing:.02em; margin-top:2px}
+#cardWord .gap{display:inline-block; min-width:1ch; padding:0 .12em; margin-right:.04em; border-radius:8px; background:var(--bg); color:var(--muted)}
+#cardWord .gap.filled{background:none; color:var(--accent); animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+#tiles{display:flex; gap:14px}
+.tile{
+  width:92px; height:92px; border-radius:20px; border:3px solid var(--tile-edge); background:var(--tile);
+  font-family:var(--font-letter); font-weight:700; font-size:50px; line-height:1; cursor:grab;
+  box-shadow:0 6px 0 var(--tile-edge); touch-action:none; position:relative; z-index:1;
+}
+@media (max-width:420px){ .tile{width:80px; height:80px; font-size:44px} #tiles{gap:10px} }
+@media (max-height:640px) and (max-aspect-ratio:5/4){ .tile{width:76px; height:76px; font-size:42px} #card{width:124px} #cardPic{font-size:62px!important} #cardWord{font-size:24px} }
+.tile.long{font-size:34px}
+.tile.dragging{z-index:50; cursor:grabbing; box-shadow:0 14px 18px rgba(0,0,0,.25)}
+.tile.shake{animation:shake .45s}
+.tile.right{border-color:var(--good); box-shadow:0 6px 0 var(--good); color:var(--good)}
+.tile.glow{animation:glow 1.1s ease-in-out infinite}
+.tile.wiggle{animation:wiggle .4s}
+.tile.selected{translate:0 -14px; border-color:var(--accent); box-shadow:0 14px 0 var(--accent); transition:translate .2s, box-shadow .2s}
+@keyframes shake{20%,60%{translate:-10px 0} 40%,80%{translate:10px 0}}
+@keyframes glow{50%{box-shadow:0 0 0 8px rgba(255,200,60,.8), 0 6px 0 var(--tile-edge)}}
+
+#hand{position:fixed; font-size:54px; pointer-events:none; z-index:60; left:0; top:0}
+.fly{position:fixed; z-index:70; pointer-events:none; line-height:1; display:flex; align-items:center; justify-content:center}
+.confetti{position:fixed; top:-60px; z-index:80; pointer-events:none; font-size:30px}
+
+/* ---------- Überlagerungen ---------- */
+.overlay{position:fixed; inset:0; z-index:100; background:var(--overlay); display:flex; align-items:center; justify-content:center; padding:16px}
+.sheet{
+  background:var(--panel); color:var(--ink); border-radius:24px; padding:26px 24px; max-width:460px; width:100%;
+  box-sizing:border-box; text-align:center; box-shadow:0 10px 0 var(--shade); max-height:100%; overflow:auto;
+}
+.sheet h1{font-size:clamp(34px, 8vw, 48px); margin:.1em 0 .2em; line-height:1.05; text-wrap:balance; color:var(--accent)}
+.sheet .art{font-size:64px; line-height:1}
+.sheet p{font-size:17px; line-height:1.45; margin:.4em 0 1em; color:var(--ink)}
+.sheet.left{text-align:left}
+.sheet h2{font-size:24px; margin:0 0 .5em}
+.row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--card-edge)}
+.row label{font-size:16px}
+.row input[type=range]{flex:1; max-width:180px; accent-color:var(--accent)}
+.danger{border:2px solid #c9483b; color:#c9483b; background:transparent; border-radius:999px; padding:.4em 1em; font-size:16px; cursor:pointer}
+.danger.armed{background:#c9483b; color:#fff}
+.small{font-size:14px!important; color:var(--muted)!important}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important; animation-iteration-count:1!important}
+}
+</style>
+
+<div id="scene" aria-label="Die Insel von Fritzi">
+  <svg class="bg" viewBox="0 0 160 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:var(--sky1)"/><stop offset="1" style="stop-color:var(--sky2)"/>
+      </linearGradient>
+      <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:var(--sea1)"/><stop offset="1" style="stop-color:var(--sea2)"/>
+      </linearGradient>
+    </defs>
+    <rect width="160" height="100" fill="url(#gSky)"/>
+    <rect y="54" width="160" height="46" fill="url(#gSea)"/>
+    <g class="waves"><path id="wave1" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width=".5"/></g>
+    <ellipse cx="80" cy="73.5" rx="70" ry="16" fill="#9fdde6" fill-opacity=".45"/>
+    <ellipse cx="80" cy="72" rx="66" ry="14" fill="#efd39a"/>
+    <ellipse cx="80" cy="70.5" rx="61" ry="11.5" fill="#f6e1b0"/>
+    <ellipse cx="78" cy="65" rx="48" ry="9" fill="#6fba52"/>
+    <ellipse cx="76" cy="63.5" rx="40" ry="6.5" fill="#86cc63"/>
+    <g class="waves w2"><path id="wave2" fill="none" stroke="#ffffff" stroke-opacity=".3" stroke-width=".5"/></g>
+  </svg>
+  <div class="storm s1" aria-hidden="true">☁️</div>
+  <div class="storm s2" aria-hidden="true">☁️</div>
+  <div class="storm s3" aria-hidden="true">☁️</div>
+  <div id="objects"></div>
+  <button class="obj" id="fritzi" aria-label="Fritzi der Fuchs"><span class="inner">🦊</span></button>
+  <div id="bubble" class="off" role="status"></div>
+  <div id="counter">🏝️ 0 / 0</div>
+  <button id="parentBtn" aria-label="Eltern-Einstellungen" title="Eltern-Einstellungen">⚙️</button>
+  <button id="fsBtn" aria-label="Vollbild" title="Vollbild" hidden>⛶</button>
+</div>
+
+<div id="panel">
+  <div class="view" id="idle" hidden>
+    <button class="big pulse" id="playBtn">▶ Spielen</button>
+    <p class="hint" id="idleHint"></p>
+  </div>
+  <div class="view" id="play" hidden>
+    <div class="stars" id="stars"></div>
+    <button id="card" aria-label="Bild anhören">
+      <div id="cardPic"></div>
+      <div id="cardWord"></div>
+    </button>
+    <div id="tiles"></div>
+  </div>
+  <div class="view" id="end" hidden>
+    <button class="big pulse" id="againBtn">▶ Noch eine Runde</button>
+    <button class="ghost" id="restBtn">Pause machen</button>
+  </div>
+</div>
+
+<div class="overlay" id="intro">
+  <div class="sheet">
+    <div class="art">🦊🏝️</div>
+    <h1>Die Wort-Insel</h1>
+    <p>Ein Sturm hat alles von Fritzis Insel weggepustet. Finde die Anfangslaute, dann kommt alles zurück!</p>
+    <button class="big" id="startBtn">Los geht's!</button>
+    <p class="small" style="margin-top:1.2em">Tipp: Ton anschalten. Am besten auf dem Tablet quer spielen.</p>
+  </div>
+</div>
+
+<div class="overlay" id="parents" hidden>
+  <div class="sheet left">
+    <h2>Für Eltern</h2>
+    <p class="small">Das Kind hört ein Wort und sucht den Anfangsbuchstaben. Ein Klick auf einen Buchstaben spielt seinen Laut, ein zweiter Klick (oder Klick aufs Bild) antwortet. Auf dem Tablet geht auch Ziehen aufs Bild. Mit Tastatur: den Buchstaben drücken (S für SCH, E für EI), nochmal drücken oder Enter antwortet. Falsche Antworten werden nie bestraft; nach zwei Versuchen leuchtet der richtige Buchstabe.</p>
+    <div class="row"><label for="rate">Sprechtempo</label><input type="range" id="rate" min="0.6" max="1.2" step="0.05"></div>
+    <div class="row"><label for="roundSize">Karten pro Runde</label><input type="range" id="roundSize" min="3" max="8" step="1"><span id="roundSizeVal" style="font-variant-numeric:tabular-nums;min-width:1.5em">5</span></div>
+    <div class="row"><label for="voiceSel">Stimme</label><select id="voiceSel" style="flex:1;max-width:230px;font:inherit;font-size:15px;padding:4px;border-radius:8px"></select></div>
+    <div class="row"><span>Stimme testen</span><button class="ghost" id="testVoice">🔊 Testen</button></div>
+    <p class="small" id="voiceInfo"></p>
+    <div class="row"><span>Insel neu beginnen</span><button class="danger" id="resetBtn">Zurücksetzen</button></div>
+    <div style="text-align:center;margin-top:14px"><button class="big" id="closeParents" style="font-size:20px">Fertig</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Daten ---------- */
+// say: wie die Sprachausgabe den Laut (nicht den Buchstabennamen) spricht
+const SOUNDS = {
+  A:{say:"a"}, B:{say:"bö"}, D:{say:"dö"}, E:{say:"ä"}, EI:{say:"ei"}, F:{say:"fff"},
+  G:{say:"gö"}, H:{say:"hö"}, I:{say:"i"}, K:{say:"kö"}, L:{say:"lll"}, M:{say:"mmm"},
+  O:{say:"o"}, P:{say:"pö"}, R:{say:"rrr"}, S:{say:"sss"}, SCH:{say:"schhh"},
+  T:{say:"tö"}, U:{say:"u"}, W:{say:"wö"}, Z:{say:"zö"}
+};
+// Laute, die sich für Fünfjährige zu ähnlich anhören, kommen nie gemeinsam dran
+const SIMILAR = [["B","P"],["D","T"],["G","K"],["F","W"],["S","Z","SCH"],["E","EI","I"],["O","U"],["A","EI"]];
+
+// x/y = Fußpunkt auf der Insel in %, s = Größe in % der Inselbreite, z = Ebene
+const WORDS = [
+  {id:"sonne", word:"Sonne", art:"die", s:"S", pic:"☀️", x:86, y:27, size:10, z:1, anim:"spin"},
+  {id:"wolke", word:"Wolke", art:"die", s:"W", pic:"☁️", x:22, y:22, size:9, z:1, anim:"drift"},
+  {id:"regenbogen", word:"Regenbogen", art:"der", s:"R", pic:"🌈", x:58, y:35, size:17, z:0},
+  {id:"baum", word:"Baum", art:"der", s:"B", pic:"🌳", x:38, y:61, size:15, z:3, anim:"sway"},
+  {id:"apfel", word:"Apfel", art:"der", s:"A", pic:"🍎", x:34, y:48, size:3, z:4},
+  {id:"uhu", word:"Uhu", art:"der", s:"U", pic:"🦉", x:42, y:45, size:3.6, z:4},
+  {id:"schaukel", word:"Schaukel", art:"die", s:"SCH", pic:"svg:swing", x:48, y:63, size:7, z:3},
+  {id:"haus", word:"Haus", art:"das", s:"H", pic:"🏠", x:62, y:59, size:11, z:3},
+  {id:"laterne", word:"Laterne", art:"die", s:"L", pic:"🏮", x:70.5, y:62, size:3.6, z:5},
+  {id:"palme", word:"Palme", art:"die", s:"P", pic:"🌴", x:79, y:65, size:11, z:3, anim:"sway"},
+  {id:"zelt", word:"Zelt", art:"das", s:"Z", pic:"⛺", x:25, y:67, size:7, z:3},
+  {id:"teddy", word:"Teddy", art:"der", s:"T", pic:"🧸", x:31.5, y:71, size:3.6, z:5},
+  {id:"geschenk", word:"Geschenk", art:"das", s:"G", pic:"🎁", x:55, y:67.5, size:4, z:5},
+  {id:"maus", word:"Maus", art:"die", s:"M", pic:"🐭", x:49, y:71.5, size:3.6, z:5},
+  {id:"igel", word:"Igel", art:"der", s:"I", pic:"🦔", x:37, y:75.5, size:4.5, z:6},
+  {id:"schnecke", word:"Schnecke", art:"die", s:"SCH", pic:"🐌", x:45, y:80, size:3.6, z:6},
+  {id:"eis", word:"Eis", art:"das", s:"EI", pic:"🍦", x:24, y:79, size:3.6, z:7},
+  {id:"schildkroete", word:"Schildkröte", art:"die", s:"SCH", pic:"🐢", x:60, y:81, size:5, z:6},
+  {id:"krabbe", word:"Krabbe", art:"die", s:"K", pic:"🦀", x:71, y:81, size:4, z:6},
+  {id:"ente", word:"Ente", art:"die", s:"E", pic:"🦆", x:8, y:83, size:5, z:6, anim:"bob"},
+  {id:"boot", word:"Boot", art:"das", s:"B", pic:"⛵", x:91, y:82, size:10, z:6, anim:"bob"},
+  {id:"fisch", word:"Fisch", art:"der", s:"F", pic:"🐟", x:18, y:97, size:4.5, z:8, anim:"swim"},
+  {id:"oktopus", word:"Oktopus", art:"der", s:"O", pic:"🐙", x:50, y:99, size:5, z:8, anim:"bob"},
+  {id:"delfin", word:"Delfin", art:"der", s:"D", pic:"🐬", x:80, y:98, size:7, z:8, anim:"jump"}
+];
+const PRAISE = ["Super!","Toll gemacht!","Juhu!","Klasse!","Genau richtig!","Prima!","Spitze!"];
+
+const SWING_SVG = '<svg class="swing" viewBox="0 0 100 100" width="1em" height="1em" aria-hidden="true">' +
+  '<g stroke="#8a5a2b" stroke-width="7" stroke-linecap="round" fill="none">' +
+  '<path d="M22 12 L8 97 M22 12 L36 97 M78 12 L64 97 M78 12 L92 97"/><path d="M16 12 H84"/></g>' +
+  '<g class="seat"><path d="M38 14 V70 M62 14 V70" stroke="#5b4636" stroke-width="2.5"/>' +
+  '<rect x="32" y="68" width="36" height="8" rx="3" fill="#e2483b"/></g></svg>';
+
+/* ---------- Zustand ---------- */
+const LS = "wortinsel.v1";
+let state = {solved:[], rate:0.9, roundSize:5};
+try{ const saved = JSON.parse(localStorage.getItem(LS)); if(saved) state = Object.assign(state, saved); }catch(e){}
+state.solved = state.solved.filter(id => WORDS.some(w => w.id === id));
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
+
+const $ = id => document.getElementById(id);
+const sceneEl = $("scene"), objectsEl = $("objects"), bubbleEl = $("bubble");
+const cardEl = $("card"), cardPicEl = $("cardPic"), cardWordEl = $("cardWord"), tilesEl = $("tiles");
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const picHTML = w => w.pic === "svg:swing" ? SWING_SVG : w.pic;
+
+/* ---------- Sprache ---------- */
+let voice = null;
+const hasTTS = "speechSynthesis" in window;
+// natürliche (neuronale) Stimmen zuerst, dann bekannte gute Systemstimmen
+function voiceScore(v){
+  const n = v.name;
+  let s = 0;
+  if(/natural|neural|online/i.test(n)) s += 100;
+  if(/premium/i.test(n)) s += 90;
+  if(/enhanced|erweitert/i.test(n)) s += 70;
+  if(/seraphina|amala|katja|anna|google/i.test(n)) s += 20;
+  if(/de-DE/i.test(v.lang)) s += 5;
+  return s;
+}
+function germanVoices(){
+  return hasTTS ? speechSynthesis.getVoices().filter(v => /^de/i.test(v.lang)).sort((a,b) => voiceScore(b) - voiceScore(a)) : [];
+}
+function pickVoice(){
+  if(!hasTTS) return;
+  const de = germanVoices();
+  voice = de.find(v => v.name === state.voice) || de[0] || null;
+  fillVoiceSelect();
+}
+function fillVoiceSelect(){
+  const sel = document.getElementById("voiceSel"); if(!sel) return;
+  const de = germanVoices();
+  sel.innerHTML = "";
+  de.forEach(v => { const o = document.createElement("option"); o.value = v.name; o.textContent = v.name; sel.appendChild(o); });
+  if(voice) sel.value = voice.name;
+  sel.disabled = de.length === 0;
+}
+if(hasTTS){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+
+function tts(text){
+  return new Promise(res => {
+    if(!hasTTS){ setTimeout(res, 500); return; }
+    let done = false; const fin = () => { if(!done){ done = true; res(); } };
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "de-DE"; if(voice) u.voice = voice; u.rate = state.rate; u.pitch = 1.1;
+      u.onend = fin; u.onerror = fin;
+      speechSynthesis.speak(u);
+    }catch(e){ fin(); }
+    setTimeout(fin, 1500 + text.length * 120 / state.rate);
+  });
+}
+/* Aufnahmen (ElevenLabs oder eigene) aus audio/, beschrieben in audio/manifest.json */
+let actx = null, clipFiles = null, curSrc = null;
+const bufCache = {};
+fetch("audio/manifest.json").then(r => r.ok ? r.json() : null).then(j => {
+  if(j && j.clips && typeof j.clips === "object") clipFiles = j.clips;
+}).catch(() => {});
+function initAudio(){
+  if(!actx){ try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ actx = null; } }
+  if(actx && actx.state === "suspended") actx.resume().catch(() => {});
+}
+document.addEventListener("pointerdown", () => { if(actx && actx.state === "suspended") actx.resume().catch(() => {}); });
+function loadBuf(key){
+  if(!bufCache[key]){
+    bufCache[key] = fetch("audio/" + clipFiles[key])
+      .then(r => { if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(ab => new Promise((res, rej) => actx.decodeAudioData(ab, res, rej)));
+    bufCache[key].catch(() => { delete bufCache[key]; });
+  }
+  return bufCache[key];
+}
+function preloadClips(){ if(actx && clipFiles) Object.keys(clipFiles).forEach(k => loadBuf(k).catch(() => {})); }
+async function playClip(key){
+  try{
+    const buf = await loadBuf(key);
+    return await new Promise(res => {
+      const src = actx.createBufferSource();
+      src.buffer = buf; src.connect(actx.destination);
+      curSrc = src; src.onended = () => res(true);
+      src.start();
+    });
+  }catch(e){ return false; }
+}
+const hasClip = key => !!(actx && clipFiles && clipFiles[key]);
+const C = (clip, text) => ({clip, text});
+
+let seq = 0;
+// spricht eine Folge; ein neuer Aufruf bricht die alte Folge ab
+async function say(parts){
+  const my = ++seq;
+  if(hasTTS){ try{ speechSynthesis.cancel(); }catch(e){} }
+  if(curSrc){ try{ curSrc.stop(); }catch(e){} curSrc = null; }
+  for(let p of parts){
+    if(my !== seq) return false;
+    if(typeof p === "string") p = {text:p};
+    else if(p.sound) p = C("s_" + p.sound, SOUNDS[p.sound].say);
+    else if(p.word) p = C("w_" + p.word.id, p.word.word);
+    if(p.pause){ await wait(p.pause); continue; }
+    if(p.clip && hasClip(p.clip)){
+      const ok = await playClip(p.clip);
+      if(ok || my !== seq) continue;
+    }
+    await tts(p.text);
+  }
+  return my === seq;
+}
+let bubbleTimer = 0;
+function bubble(text){
+  bubbleEl.textContent = text; bubbleEl.classList.remove("off");
+  clearTimeout(bubbleTimer); bubbleTimer = setTimeout(() => bubbleEl.classList.add("off"), 9000);
+}
+function fritzi(text, parts){ bubble(text); return say(parts || [text]); }
+
+/* ---------- Insel ---------- */
+function makeWaves(){
+  let d1 = "M-20 58", d2 = "M-20 90";
+  for(let x=-20; x<200; x+=10){ d1 += " q2.5 -1.2 5 0 t5 0"; d2 += " q2.5 1.2 5 0 t5 0"; }
+  $("wave1").setAttribute("d", d1);
+  $("wave2").setAttribute("d", d2);
+}
+function objEl(w, isNew){
+  const b = document.createElement("button");
+  b.className = "obj" + (w.anim ? " a-" + w.anim : "");
+  b.style.left = w.x + "%"; b.style.top = w.y + "%"; b.style.zIndex = w.z;
+  b.style.setProperty("--s", w.size);
+  b.dataset.id = w.id;
+  b.setAttribute("aria-label", w.word);
+  b.innerHTML = '<span class="pop' + (isNew ? " new" : "") + '"><span class="inner">' + picHTML(w) + '</span></span>';
+  b.addEventListener("click", () => {
+    b.classList.remove("wiggle"); void b.offsetWidth; b.classList.add("wiggle");
+    if(!(round && round.locked)) say([{word:w}]);
+  });
+  return b;
+}
+function renderIsland(newId){
+  WORDS.forEach(w => {
+    if(!state.solved.includes(w.id)) return;
+    if(objectsEl.querySelector('[data-id="' + w.id + '"]')) return;
+    objectsEl.appendChild(objEl(w, w.id === newId));
+  });
+  objectsEl.querySelectorAll(".obj").forEach(el => { if(!state.solved.includes(el.dataset.id)) el.remove(); });
+  updateSky();
+}
+function mix(a, b, t){
+  const pa = a.match(/\w\w/g).map(h => parseInt(h,16)), pb = b.match(/\w\w/g).map(h => parseInt(h,16));
+  return "#" + pa.map((v,i) => Math.round(v + (pb[i]-v)*t).toString(16).padStart(2,"0")).join("");
+}
+function updateSky(){
+  const p = state.solved.length / WORDS.length, t = Math.min(1, p * 1.6);
+  sceneEl.style.setProperty("--sky1", mix("6f7c8c", "3aa7f0", t));
+  sceneEl.style.setProperty("--sky2", mix("aab3bd", "bfe9ff", t));
+  sceneEl.style.setProperty("--sea1", mix("4b6b7d", "34b6d8", t));
+  sceneEl.style.setProperty("--sea2", mix("2f4f62", "1f7fb8", t));
+  document.querySelectorAll(".storm").forEach((el, i) => { el.style.opacity = Math.max(0, 1 - p * (3 + i)); });
+  $("counter").textContent = "🏝️ " + state.solved.length + " / " + WORDS.length;
+}
+new ResizeObserver(() => sceneEl.style.setProperty("--u", sceneEl.clientWidth / 100 + "px")).observe(sceneEl);
+$("fritzi").addEventListener("click", () => {
+  if(round && !round.locked && round.cards[round.idx]) { askCard(); return; }
+  const hello = ["Hallo! Ich bin Fritzi.", "Hilfst du mir mit meiner Insel?", "Ich mag Buchstaben!"];
+  const i = Math.floor(Math.random() * hello.length);
+  fritzi(hello[i], [C("hello_" + i, hello[i])]);
+});
+
+/* ---------- Ansichten ---------- */
+function show(view){
+  ["idle","play","end"].forEach(v => $(v).hidden = v !== view);
+  if(view === "idle"){
+    const left = WORDS.length - state.solved.length;
+    $("idleHint").textContent = left ? "Noch " + left + " Sachen fehlen auf der Insel." : "Die ganze Insel ist wieder da! Spielt weiter zum Üben.";
+  }
+}
+
+/* ---------- Spielrunde ---------- */
+let round = null, hintShown = false;
+
+function startRound(){
+  const open = WORDS.filter(w => !state.solved.includes(w.id));
+  const pool = shuffle((open.length ? open : WORDS).slice());
+  round = {cards: pool.slice(0, state.roundSize), idx: 0, locked: false, wrong: 0};
+  const st = $("stars"); st.innerHTML = "";
+  round.cards.forEach(() => { const s = document.createElement("span"); s.textContent = "⭐"; st.appendChild(s); });
+  show("play");
+  nextCard();
+}
+function distractors(target, n){
+  const banned = new Set([target]);
+  SIMILAR.forEach(g => { if(g.includes(target)) g.forEach(x => banned.add(x)); });
+  const out = [];
+  shuffle(Object.keys(SOUNDS).filter(s => !banned.has(s))).forEach(s => {
+    if(out.length >= n) return;
+    if(SIMILAR.some(g => g.includes(s) && out.some(o => g.includes(o)))) return;
+    out.push(s);
+  });
+  return out;
+}
+function askCard(){
+  const w = round.cards[round.idx];
+  const parts = [{word:w}, {pause:200}, C("ask", "Womit fängt das an?")];
+  let text = w.word + "! Womit fängt das an?";
+  if(!hintShown){
+    const pick = "Klick auf einen Buchstaben und hör genau hin. Klick nochmal, wenn du sicher bist!";
+    parts.push(C("pick", pick)); text += " " + pick;
+  }
+  fritzi(text, parts);
+}
+function nextCard(){
+  const w = round.cards[round.idx];
+  round.locked = false; round.wrong = 0;
+  cardPicEl.innerHTML = picHTML(w);
+  cardPicEl.style.visibility = "";
+  const head = w.word.slice(0, w.s.length), rest = w.word.slice(w.s.length);
+  cardWordEl.innerHTML = '<span class="gap">?</span>' + rest;
+  cardWordEl.dataset.head = head;
+  cardEl.classList.remove("solved","enter"); void cardEl.offsetWidth; cardEl.classList.add("enter");
+  tilesEl.innerHTML = "";
+  shuffle([w.s].concat(distractors(w.s, 2))).forEach(s => tilesEl.appendChild(makeTile(s)));
+  askCard();
+  if(!hintShown) setTimeout(showHand, 600);
+}
+
+function makeTile(s){
+  const b = document.createElement("button");
+  b.className = "tile" + (s.length > 1 ? " long" : "");
+  b.textContent = s; b.dataset.s = s;
+  b.setAttribute("aria-label", "Buchstabe " + s + ", einmal klicken zum Anhören, nochmal klicken zum Antworten");
+  let start = null, drag = false, pid = null;
+  b.addEventListener("pointerdown", e => {
+    if(round.locked) return;
+    e.preventDefault();
+    pid = e.pointerId; try{ b.setPointerCapture(pid); }catch(err){}
+    start = {x:e.clientX, y:e.clientY}; drag = false;
+    b.style.transition = "none";
+  });
+  b.addEventListener("pointermove", e => {
+    if(!start || e.pointerId !== pid) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if(!drag && Math.hypot(dx, dy) > 12){ drag = true; b.classList.add("dragging"); hideHand(); }
+    if(drag){
+      b.style.transform = "translate(" + dx + "px," + dy + "px) scale(1.12)";
+      cardEl.classList.toggle("target", overCard(e));
+    }
+  });
+  const end = e => {
+    if(!start || e.pointerId !== pid) return;
+    const wasDrag = drag; start = null; drag = false;
+    b.classList.remove("dragging"); cardEl.classList.remove("target");
+    if(e.type === "pointerup" && wasDrag && overCard(e)){
+      answer(b, s);
+    } else {
+      springBack(b);
+      if(e.type === "pointerup" && !wasDrag) choose(b);
+    }
+  };
+  b.addEventListener("pointerup", end);
+  b.addEventListener("pointercancel", end);
+  return b;
+}
+// zweistufig: erster Klick wählt aus und spielt den Laut, zweiter Klick antwortet
+function choose(b){
+  if(!round || round.locked) return;
+  if(b.classList.contains("selected")) answer(b, b.dataset.s);
+  else select(b);
+}
+function select(b){
+  tilesEl.querySelectorAll(".tile.selected").forEach(t => t.classList.remove("selected"));
+  b.classList.add("selected");
+  b.classList.remove("wiggle"); void b.offsetWidth; b.classList.add("wiggle");
+  hideHand();
+  const parts = [{sound: b.dataset.s}];
+  if(!hintShown) parts.push({pause:300}, C("confirm", "Klick nochmal drauf, wenn du sicher bist!"));
+  say(parts);
+}
+// Tastatur: Buchstabe drücken (S für SCH, E für EI), nochmal drücken oder Enter antwortet
+document.addEventListener("keydown", e => {
+  if(!round || round.locked || $("play").hidden || !$("parents").hidden) return;
+  if(e.ctrlKey || e.altKey || e.metaKey) return;
+  const tiles = [...tilesEl.children];
+  const sel = tiles.findIndex(t => t.classList.contains("selected"));
+  if(e.key === "Enter" || e.key === " "){
+    e.preventDefault();
+    if(sel >= 0) answer(tiles[sel], tiles[sel].dataset.s);
+    else say([{word: round.cards[round.idx]}]);
+    return;
+  }
+  if(e.key === "ArrowRight" || e.key === "ArrowLeft"){
+    e.preventDefault();
+    const step = e.key === "ArrowRight" ? 1 : tiles.length - 1;
+    const n = sel < 0 ? (e.key === "ArrowRight" ? 0 : tiles.length - 1) : (sel + step) % tiles.length;
+    select(tiles[n]); tiles[n].focus();
+    return;
+  }
+  if(e.key.length === 1){
+    const t = tiles.find(t => t.dataset.s[0] === e.key.toUpperCase());
+    if(t){ e.preventDefault(); choose(t); t.focus(); }
+  }
+});
+function springBack(b){
+  b.style.transition = "transform .3s cubic-bezier(.2,1.4,.4,1)";
+  b.style.transform = "";
+}
+function overCard(e){
+  const r = cardEl.getBoundingClientRect(), pad = 24;
+  return e.clientX > r.left - pad && e.clientX < r.right + pad && e.clientY > r.top - pad && e.clientY < r.bottom + pad;
+}
+cardEl.addEventListener("click", () => {
+  if(!round || round.locked) return;
+  const sel = tilesEl.querySelector(".tile.selected");
+  if(sel) answer(sel, sel.dataset.s);
+  else say([{word: round.cards[round.idx]}]);
+});
+
+function answer(tile, s){
+  const w = round.cards[round.idx];
+  if(s === w.s) correct(tile, w);
+  else wrong(tile, s, w);
+}
+function wrong(tile, s, w){
+  round.wrong++;
+  tile.classList.remove("selected");
+  springBack(tile);
+  tile.classList.remove("shake"); void tile.offsetWidth; tile.classList.add("shake");
+  const parts = [C("wrong", "Hmm, das ist"), {sound:s}, {pause:250}, C("listen", "Hör nochmal genau:"), {word:w}];
+  let text = "Hmm, das passt noch nicht. Hör nochmal genau: " + w.word + "!";
+  if(round.wrong >= 2){
+    const right = tilesEl.querySelector('[data-s="' + w.s + '"]');
+    if(right) right.classList.add("glow");
+    parts.push(C("glow", "Probier mal den leuchtenden Buchstaben!"));
+    text += " Probier mal den leuchtenden Buchstaben!";
+  }
+  fritzi(text, parts);
+}
+async function correct(tile, w){
+  round.locked = true; hintShown = true; hideHand();
+  tile.style.transition = "transform .3s"; tile.style.transform = "";
+  tile.classList.remove("glow"); tile.classList.add("right");
+  const gap = cardWordEl.querySelector(".gap");
+  gap.textContent = cardWordEl.dataset.head; gap.classList.add("filled");
+  cardEl.classList.add("solved");
+  const isNew = !state.solved.includes(w.id);
+  const pi = Math.floor(Math.random() * PRAISE.length), praise = PRAISE[pi];
+  const line = isNew ? cap(w.art) + " " + w.word + " ist wieder auf der Insel!" : cap(w.art) + " " + w.word + "!";
+  bubble(praise + " " + line);
+  const parts = [{sound:w.s}, {pause:150}, {word:w}, C("p_" + pi, praise)];
+  if(isNew) parts.push(C("l_" + w.id, line));
+  const talk = say(parts);
+  await wait(1400);
+  if(isNew){
+    await flyToIsland(w);
+    state.solved.push(w.id); save();
+    renderIsland(w.id);
+  } else {
+    const el = objectsEl.querySelector('[data-id="' + w.id + '"]');
+    if(el){ el.classList.remove("wiggle"); void el.offsetWidth; el.classList.add("wiggle"); }
+  }
+  const star = $("stars").children[round.idx]; if(star) star.classList.add("on");
+  await Promise.race([talk, wait(6000)]);
+  await wait(400);
+  round.idx++;
+  if(round.idx >= round.cards.length) endRound();
+  else nextCard();
+}
+function flyToIsland(w){
+  return new Promise(res => {
+    const pr = cardPicEl.getBoundingClientRect(), sr = sceneEl.getBoundingClientRect();
+    const fs = pr.height;
+    const target = w.size / 100 * sr.width;
+    const tx = sr.left + w.x / 100 * sr.width;
+    const ty = sr.top + w.y / 100 * sr.height - target / 2;
+    const cx = pr.left + pr.width / 2, cy = pr.top + pr.height / 2;
+    const fly = document.createElement("div");
+    fly.className = "fly"; fly.innerHTML = picHTML(w);
+    fly.style.cssText = "left:" + (cx - fs/2) + "px;top:" + (cy - fs/2) + "px;width:" + fs + "px;height:" + fs + "px;font-size:" + (fs * 0.9) + "px";
+    document.body.appendChild(fly);
+    cardPicEl.style.visibility = "hidden";
+    const dx = tx - cx, dy = ty - cy, sc = target / fs;
+    const anim = fly.animate([
+      {transform:"translate(0,0) scale(1) rotate(0)"},
+      {transform:"translate(" + dx*0.45 + "px," + (dy*0.45 - 90) + "px) scale(" + Math.max(sc, 0.7) + ") rotate(-12deg)", offset:0.45},
+      {transform:"translate(" + dx + "px," + dy + "px) scale(" + sc + ") rotate(0)"}
+    ], {duration:1000, easing:"ease-in-out", fill:"forwards"});
+    anim.onfinish = () => { fly.remove(); res(); };
+  });
+}
+function endRound(){
+  const all = state.solved.length === WORDS.length;
+  round = null;
+  confetti(all ? 70 : 35);
+  show("end");
+  const t = all
+    ? "Juhu! Die ganze Insel ist wieder da! Du bist ein echter Buchstaben-Held!"
+    : "Juhu! Schau mal, wie schön meine Insel wird! Danke für deine Hilfe!";
+  fritzi(t, [C(all ? "end_all" : "end_round", t)]);
+}
+
+/* ---------- Effekte ---------- */
+let handAnim = null;
+function showHand(){
+  if(hintShown || !round) return;
+  const tiles = tilesEl.children; if(!tiles.length) return;
+  const r = tiles[Math.floor(tiles.length/2)].getBoundingClientRect();
+  let h = $("hand");
+  if(!h){ h = document.createElement("div"); h.id = "hand"; h.textContent = "👆"; h.setAttribute("aria-hidden","true"); document.body.appendChild(h); }
+  const x = r.left + r.width/2 - 20, y = r.top + r.height/2;
+  const at = (dy, s) => "translate(" + x + "px," + (y + dy) + "px) scale(" + s + ")";
+  h.hidden = false;
+  if(handAnim) handAnim.cancel();
+  // zeigt zwei Klicks auf denselben Stein
+  handAnim = h.animate([
+    {transform:at(30, 1), opacity:0},
+    {transform:at(14, 1), opacity:1, offset:.15},
+    {transform:at(4, .85), opacity:1, offset:.25},
+    {transform:at(14, 1), opacity:1, offset:.38},
+    {transform:at(14, 1), opacity:1, offset:.5},
+    {transform:at(4, .85), opacity:1, offset:.6},
+    {transform:at(14, 1), opacity:1, offset:.73},
+    {transform:at(30, 1), opacity:0}
+  ], {duration:2400, iterations:Infinity, delay:300});
+}
+function hideHand(){ const h = $("hand"); if(h) h.hidden = true; if(handAnim){ handAnim.cancel(); handAnim = null; } }
+function confetti(n){
+  const set = ["⭐","🎉","🌟","🐚","🌸","✨"];
+  for(let i=0; i<n; i++){
+    const c = document.createElement("div");
+    c.className = "confetti"; c.textContent = pick(set);
+    c.style.left = Math.random() * 100 + "vw";
+    document.body.appendChild(c);
+    const a = c.animate([
+      {transform:"translateY(0) rotate(0)"},
+      {transform:"translate(" + (Math.random()*120-60) + "px," + (window.innerHeight + 120) + "px) rotate(" + (Math.random()*720-360) + "deg)"}
+    ], {duration:2200 + Math.random()*1800, delay:Math.random()*700, easing:"cubic-bezier(.3,.1,.6,1)"});
+    a.onfinish = () => c.remove();
+  }
+}
+
+/* ---------- Knöpfe ---------- */
+$("startBtn").addEventListener("click", () => {
+  $("intro").hidden = true;
+  initAudio(); preloadClips();
+  show("idle");
+  const key = state.solved.length === 0 ? "intro_new" : state.solved.length < WORDS.length ? "intro_back" : "intro_done";
+  const text = {
+    intro_new: "Hallo, ich bin Fritzi! Heute Nacht war ein riesiger Sturm. Er hat alles von meiner Insel weggepustet! Hilfst du mir? Wenn du den Anfangsbuchstaben findest, kommt alles zurück.",
+    intro_back: "Hallo! Schön, dass du wieder da bist. Lass uns weiter meine Insel aufbauen!",
+    intro_done: "Hallo! Meine Insel ist wieder ganz. Wollen wir trotzdem Buchstaben üben?"
+  }[key];
+  fritzi(text, [C(key, text)]);
+});
+$("playBtn").addEventListener("click", startRound);
+$("againBtn").addEventListener("click", startRound);
+$("restBtn").addEventListener("click", () => { show("idle"); const t = "Bis bald! Ich passe gut auf meine Insel auf."; fritzi(t, [C("rest", t)]); });
+
+const rateEl = $("rate"), sizeEl = $("roundSize");
+rateEl.value = state.rate; sizeEl.value = state.roundSize; $("roundSizeVal").textContent = state.roundSize;
+rateEl.addEventListener("input", () => { state.rate = parseFloat(rateEl.value); save(); });
+sizeEl.addEventListener("input", () => { state.roundSize = parseInt(sizeEl.value, 10); $("roundSizeVal").textContent = state.roundSize; save(); });
+$("voiceSel").addEventListener("change", e => {
+  state.voice = e.target.value; save(); pickVoice();
+  say(["Hallo, ich bin Fritzi!"]);
+});
+$("testVoice").addEventListener("click", () => say(["Baum.", {sound:"B"}, {pause:200}, "Schaukel.", {sound:"SCH"}]));
+$("parentBtn").addEventListener("click", () => {
+  pickVoice();
+  $("voiceInfo").textContent = !hasTTS ? "Dieser Browser hat keine Sprachausgabe. Bitte Chrome, Edge oder Safari nutzen."
+    : voice ? "Stimme: " + voice.name : "Keine deutsche Stimme gefunden. In den Geräte-Einstellungen eine deutsche Sprachausgabe installieren.";
+  $("parents").hidden = false;
+});
+$("closeParents").addEventListener("click", () => { $("parents").hidden = true; });
+let armTimer = 0;
+$("resetBtn").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if(!b.classList.contains("armed")){
+    b.classList.add("armed"); b.textContent = "Wirklich alles löschen?";
+    clearTimeout(armTimer); armTimer = setTimeout(() => { b.classList.remove("armed"); b.textContent = "Zurücksetzen"; }, 3500);
+    return;
+  }
+  clearTimeout(armTimer); b.classList.remove("armed"); b.textContent = "Zurücksetzen";
+  state.solved = []; save(); round = null;
+  renderIsland(); show("idle"); $("parents").hidden = true;
+  const t = "Oh nein, schon wieder ein Sturm! Hilfst du mir nochmal?";
+  fritzi(t, [C("reset", t)]);
+});
+
+/* ---------- Vollbild ---------- */
+const root = document.documentElement, fsBtn = $("fsBtn");
+const fsEnter = root.requestFullscreen || root.webkitRequestFullscreen;
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+if(fsEnter){
+  fsBtn.hidden = false;
+  const enterFs = () => { try{ const p = fsEnter.call(root); if(p && p.catch) p.catch(() => {}); }catch(e){} };
+  fsBtn.addEventListener("click", () => {
+    if(fsElement()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+    else enterFs();
+  });
+  const sync = () => { fsBtn.textContent = fsElement() ? "✕" : "⛶"; };
+  document.addEventListener("fullscreenchange", sync);
+  document.addEventListener("webkitfullscreenchange", sync);
+  // "Los geht's" schaltet gleich ins Vollbild, wo der Browser es erlaubt
+  $("startBtn").addEventListener("click", enterFs);
+}
+
+/* ---------- Start ---------- */
+makeWaves();
+renderIsland();
+show("idle");
+})();
+</script>
+
+</html>

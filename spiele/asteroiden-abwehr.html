@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asteroiden-Abwehr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen arcade. HUD strip on top, a porthole onto space with the station at its bottom edge, three chunky answer pads below. Deliberately single dark theme (it's space). */
+:root{
+  --space:#0a0f2c;
+  --space-2:#151c4d;
+  --line:#2c3672;
+  --ink:#eef3ff;
+  --muted:#a3add8;
+  --laser:#5ef0ff;
+  --sun:#ffc94a;
+  --hit:#ff6b6b;
+  --ok:#5be38c;
+  --pad-a:#ff9466;
+  --pad-b:#ffd05c;
+  --pad-c:#78bcff;
+  --pad-ink:#1b1446;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html{height:100%;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--space);color:var(--ink);font-family:var(--body);font-size:16px;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+#app{height:100%;display:flex;flex-direction:column;gap:10px;padding-inline:16px;padding-block:10px 14px;max-width:820px;margin:0 auto}
+
+/* HUD */
+.hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.shields{display:flex;gap:6px}
+.shields svg{width:28px;height:28px;fill:var(--laser);transition:opacity .3s,transform .3s}
+.shields svg.lost{opacity:.18;transform:scale(.85)}
+.score{display:flex;align-items:center;gap:6px;font-family:var(--display);font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums;color:var(--sun)}
+.score svg{width:28px;height:28px;fill:var(--sun)}
+.level{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.hud-btns{margin-left:auto;display:flex;gap:8px}
+.icon-btn{background:var(--space-2);color:var(--ink);border:1px solid var(--line);border-radius:12px;font:700 15px var(--body);padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn:focus-visible,.pad:focus-visible,.chip:focus-visible,.start:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* Stage */
+.stage{position:relative;flex:1;min-height:0;border-radius:22px;overflow:hidden;border:2px solid var(--line);background:var(--space)}
+#sky{position:absolute;inset:0;width:100%;height:100%;display:block}
+.toast{position:absolute;left:50%;top:14px;transform:translate(-50%,-8px);opacity:0;transition:opacity .25s,transform .25s;background:var(--space-2);border:2px solid var(--line);border-radius:14px;padding:8px 16px;font:800 20px/1.2 var(--display);white-space:nowrap;pointer-events:none;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.good{color:var(--ok);border-color:var(--ok)}
+.toast.bad{color:var(--hit);border-color:var(--hit)}
+.toast.info{color:var(--sun);border-color:var(--sun)}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:16px;background:rgba(10,15,44,.62);overflow:auto}
+.card{width:100%;max-width:440px;background:var(--space-2);border:2px solid var(--line);border-radius:24px;padding:22px 22px 24px;display:flex;flex-direction:column;gap:16px}
+.card h1,.card h2{margin:0;font-family:var(--display);font-weight:800;line-height:1;color:var(--sun);text-wrap:balance}
+.card h1{font-size:clamp(34px,8vw,46px);letter-spacing:-.01em}
+.card h2{font-size:clamp(30px,7vw,40px)}
+.card p{margin:0;line-height:1.45;color:var(--ink);max-width:60ch}
+.card .sub{color:var(--muted);font-size:15px}
+.group{display:flex;flex-direction:column;gap:8px}
+.group-label{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{flex:1 1 0;min-width:84px;background:transparent;color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:8px 10px;cursor:pointer;font:700 15px var(--body);display:flex;align-items:center;justify-content:center;gap:6px}
+.chip b{font:800 24px/1 var(--display)}
+.chip[aria-pressed="true"]{background:var(--laser);border-color:var(--laser);color:var(--pad-ink)}
+.start{background:var(--sun);color:var(--pad-ink);border:none;border-radius:18px;padding:12px 18px 14px;font:800 28px/1 var(--display);cursor:pointer;box-shadow:inset 0 -6px 0 rgba(0,0,0,.22)}
+.start:active{transform:translateY(2px);box-shadow:inset 0 -3px 0 rgba(0,0,0,.22)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .start{flex:1 1 160px}
+.start.ghost{background:transparent;color:var(--ink);border:2px solid var(--line);box-shadow:none;font-size:22px}
+.big-num{font:800 64px/1 var(--display);color:var(--sun);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:10px}
+.big-num svg{width:52px;height:52px;fill:var(--sun)}
+
+/* Answer pads */
+.pads{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pad{height:clamp(64px,13vh,100px);border:none;border-radius:22px;cursor:pointer;font:800 clamp(36px,9vw,56px)/1 var(--display);color:var(--pad-ink);font-variant-numeric:tabular-nums;box-shadow:inset 0 -7px 0 rgba(0,0,0,.24);transition:transform .08s,opacity .2s,background .2s;position:relative}
+.pad:nth-child(1){background:var(--pad-a)}
+.pad:nth-child(2){background:var(--pad-b)}
+.pad:nth-child(3){background:var(--pad-c)}
+.pad:active:not(:disabled){transform:translateY(3px);box-shadow:inset 0 -3px 0 rgba(0,0,0,.24)}
+.pad:disabled{cursor:default;opacity:.45}
+.pad.wrong{opacity:.25;animation:shake .35s}
+.pad.right{background:var(--ok)!important;opacity:1;transform:scale(1.04)}
+@keyframes shake{0%,100%{translate:0}20%{translate:-8px}40%{translate:8px}60%{translate:-5px}80%{translate:5px}}
+@media (prefers-reduced-motion:reduce){.pad.wrong{animation:none}.toast{transition:none}}
+@media (max-width:420px){.hud{gap:10px}.icon-btn span{display:none}.level{display:none}}
+</style>
+
+<div id="app">
+  <header class="hud">
+    <div class="shields" id="shields" aria-label="Schutzschild: 3 von 3">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z"/></svg>
+    </div>
+    <div class="score" aria-label="Zerstörte Asteroiden">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
+      <span id="score">0</span>
+    </div>
+    <div class="level" id="level">Stufe 1</div>
+    <div class="hud-btns">
+      <button class="icon-btn" id="soundBtn" type="button" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="soundWave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+        <span id="soundLabel">Ton an</span>
+      </button>
+      <button class="icon-btn" id="menuBtn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <span>Menü</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="sky" aria-label="Weltraum mit Raumstation und Asteroiden"></canvas>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <section class="overlay" id="menu">
+      <div class="card">
+        <h1>Asteroiden-Abwehr</h1>
+        <p>Asteroiden fliegen auf die Raumstation zu. Rechne die Aufgabe auf dem Stein und tippe das richtige Ergebnis. Dann schießt der Laser!</p>
+        <div class="group">
+          <span class="group-label">Rechenarten</span>
+          <div class="chips" id="opsChips">
+            <button class="chip" type="button" id="op-plus" data-op="+" aria-pressed="true"><b>+</b> plus</button>
+            <button class="chip" type="button" id="op-minus" data-op="-" aria-pressed="true"><b>−</b> minus</button>
+            <button class="chip" type="button" id="op-mal" data-op="*" aria-pressed="true"><b>·</b> mal</button>
+          </div>
+        </div>
+        <div class="group">
+          <span class="group-label">Ergebnis höchstens</span>
+          <div class="chips" id="maxChips">
+            <button class="chip" type="button" id="max-10" data-max="10" aria-pressed="true"><b>10</b></button>
+            <button class="chip" type="button" id="max-20" data-max="20" aria-pressed="false"><b>20</b></button>
+          </div>
+        </div>
+        <div class="group">
+          <span class="group-label">Tempo</span>
+          <div class="chips" id="tempoChips">
+            <button class="chip" type="button" id="tempo-slow" data-tempo="slow" aria-pressed="true">Gemütlich</button>
+            <button class="chip" type="button" id="tempo-fast" data-tempo="fast" aria-pressed="false">Flott</button>
+          </div>
+        </div>
+        <button class="start" id="startBtn" type="button">Los geht's!</button>
+        <p class="sub" id="bestLine">Noch kein Rekord. Schaffst du 10 Asteroiden?</p>
+      </div>
+    </section>
+
+    <section class="overlay" id="over" hidden>
+      <div class="card">
+        <h2>Schild leer!</h2>
+        <p>Die Raumstation muss repariert werden. So viele Asteroiden hast du weggeschossen:</p>
+        <div class="big-num">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
+          <span id="finalScore">0</span>
+        </div>
+        <p class="sub" id="finalBest"></p>
+        <div class="row">
+          <button class="start" id="againBtn" type="button">Nochmal!</button>
+          <button class="start ghost" id="toMenuBtn" type="button">Einstellungen</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="pads" id="pads">
+    <button class="pad" type="button" id="pad0" data-i="0" disabled>?</button>
+    <button class="pad" type="button" id="pad1" data-i="1" disabled>?</button>
+    <button class="pad" type="button" id="pad2" data-i="2" disabled>?</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const cv = $('#sky'), ctx = cv.getContext('2d');
+  const pads = [...document.querySelectorAll('.pad')];
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const OPS = { '+': '+', '-': '−', '*': '·' };
+  const COL = { laser: '#5ef0ff', sun: '#ffc94a', hit: '#ff6b6b', ok: '#5be38c' };
+
+  // ---------- helpers ----------
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const rf = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  // ---------- state ----------
+  let settings = Object.assign({ ops: ['+', '-', '*'], max: 10, tempo: 'slow' }, store.get('aa-settings', {}));
+  const G = { mode: 'menu', phase: 'idle', score: 0, correct: 0, shields: 3, level: 1, ast: null, phaseT: 0, best: store.get('aa-best', 0) };
+  let muted = store.get('aa-muted', false);
+  let particles = [], floaters = [], stars = [];
+  let shake = 0, shieldFlash = 0, cannonAng = -Math.PI / 2, laserTarget = null, time = 0;
+  let W = 0, H = 0, DPR = 1;
+
+  // ---------- problems ----------
+  let lastKey = '';
+  function gen(op, M) {
+    let a, b, ans, conf = null;
+    if (op === '+') { ans = ri(2, M); a = ri(1, ans - 1); b = ans - a; conf = Math.abs(a - b); }
+    else if (op === '-') { a = ri(2, M); b = ri(1, a); ans = a - b; conf = a + b; }
+    else {
+      const withOnes = Math.random() < 0.2, pr = [];
+      for (let x = 1; x <= 10; x++) for (let y = 1; y <= 10; y++) {
+        const p = x * y;
+        if (p < 2 || p > M) continue;
+        if (!withOnes && (x === 1 || y === 1)) continue;
+        pr.push([x, y]);
+      }
+      [a, b] = pick(pr); ans = a * b; conf = a + b;
+    }
+    const opts = new Set([ans]), cands = [];
+    if (conf !== ans && conf >= 0 && conf <= M + 5 && Math.random() < 0.5) cands.push(conf);
+    cands.push(...shuffle([ans - 1, ans + 1, ans - 2, ans + 2]), ...shuffle([ans + 3, ans - 3, ans + 4]));
+    for (const c of cands) { if (opts.size >= 3) break; if (c >= 0) opts.add(c); }
+    return { text: `${a} ${OPS[op]} ${b}`, ans, options: shuffle([...opts]), key: op + a + ',' + b };
+  }
+  function makeProblem() {
+    let p, n = 0;
+    do { p = gen(pick(settings.ops), settings.max); n++; } while (p.key === lastKey && n < 12);
+    lastKey = p.key;
+    return p;
+  }
+
+  // ---------- sound ----------
+  let AC = null;
+  function audioOn() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } }
+    if (AC && AC.state === 'suspended') AC.resume().catch(() => {});
+  }
+  function tone(f1, f2, dur, type = 'sine', vol = 0.12, delay = 0) {
+    if (muted || !AC) return;
+    const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f1, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(dur, vol, freq) {
+    if (muted || !AC) return;
+    const len = Math.floor(AC.sampleRate * dur), buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(), t = AC.currentTime;
+    s.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t);
+  }
+  const sfx = {
+    laser: () => { tone(1500, 220, 0.3, 'sawtooth', 0.06); tone(900, 140, 0.3, 'square', 0.03); },
+    boom: () => { noise(0.6, 0.35, 900); tone(160, 50, 0.4, 'sine', 0.2); },
+    wrong: () => { tone(260, 200, 0.14, 'square', 0.05); tone(200, 150, 0.2, 'square', 0.05, 0.14); },
+    hit: () => { noise(0.8, 0.45, 320); tone(110, 40, 0.6, 'sine', 0.3); },
+    level: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0, 0.2, 'triangle', 0.1, i * 0.1))
+  };
+
+  // ---------- UI ----------
+  let toastTimer = 0;
+  function toast(msg, kind = 'info', ms = 1800) {
+    const t = $('#toast');
+    t.textContent = msg; t.className = 'toast show ' + kind;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+  }
+  function renderHud() {
+    $('#score').textContent = G.score;
+    $('#level').textContent = 'Stufe ' + G.level;
+    [...document.querySelectorAll('#shields svg')].forEach((s, i) => s.classList.toggle('lost', i >= G.shields));
+    $('#shields').setAttribute('aria-label', `Schutzschild: ${G.shields} von 3`);
+  }
+  function renderPads(options, enabled) {
+    pads.forEach((p, i) => {
+      p.textContent = options ? options[i] : '?';
+      p.classList.remove('wrong', 'right');
+      p.disabled = !enabled;
+    });
+  }
+  function lockPads() { pads.forEach(p => { if (!p.classList.contains('right')) p.disabled = true; }); }
+  function renderSettings() {
+    document.querySelectorAll('#opsChips .chip').forEach(c => c.setAttribute('aria-pressed', settings.ops.includes(c.dataset.op)));
+    document.querySelectorAll('#maxChips .chip').forEach(c => c.setAttribute('aria-pressed', +c.dataset.max === settings.max));
+    document.querySelectorAll('#tempoChips .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.tempo === settings.tempo));
+    $('#bestLine').textContent = G.best > 0 ? `Dein Rekord: ${G.best} Asteroiden.` : 'Noch kein Rekord. Schaffst du 10 Asteroiden?';
+  }
+  function renderSound() {
+    $('#soundBtn').setAttribute('aria-pressed', !muted);
+    $('#soundLabel').textContent = muted ? 'Ton aus' : 'Ton an';
+    $('#soundWave').style.display = muted ? 'none' : '';
+  }
+
+  // ---------- game flow ----------
+  function duration() {
+    const base = settings.tempo === 'fast' ? 10 : 15;
+    return Math.max(5.5, base * Math.pow(0.92, G.level - 1));
+  }
+  function spawn() {
+    const pts = [];
+    const n = 11;
+    for (let i = 0; i < n; i++) pts.push(rf(0.82, 1.06));
+    const craters = Array.from({ length: 4 }, () => ({ a: rf(0, Math.PI * 2), d: rf(0.2, 0.62), r: rf(0.1, 0.2) }));
+    G.ast = { fx: rf(0.18, 0.82), t: 0, dur: duration(), rot: 0, vr: rf(-0.5, 0.5), pts, craters, problem: makeProblem() };
+    G.phase = 'fly';
+    renderPads(G.ast.problem.options, true);
+  }
+  function startGame(resume) {
+    audioOn();
+    if (!resume) { G.score = 0; G.correct = 0; G.shields = 3; G.level = 1; }
+    G.mode = 'play'; particles = []; floaters = [];
+    $('#menu').hidden = true; $('#over').hidden = true;
+    renderHud();
+    G.ast = null; G.phase = 'gap'; G.phaseT = 0.6;
+    renderPads(null, false);
+  }
+  function toMenu() {
+    G.mode = 'menu'; G.phase = 'idle'; G.ast = null;
+    $('#over').hidden = true; $('#menu').hidden = false;
+    renderSettings(); renderPads(null, false);
+  }
+  function gameOver() {
+    G.mode = 'over'; G.phase = 'idle';
+    const newBest = G.score > G.best;
+    if (newBest) { G.best = G.score; store.set('aa-best', G.best); }
+    $('#finalScore').textContent = G.score;
+    $('#finalBest').textContent = newBest && G.score > 0 ? 'Neuer Rekord! Super gerechnet.' : `Rekord: ${G.best} Asteroiden.`;
+    $('#over').hidden = false;
+    renderPads(null, false);
+  }
+  function answer(i) {
+    if (G.mode !== 'play' || G.phase !== 'fly' || !G.ast) return;
+    const pad = pads[i];
+    if (pad.disabled) return;
+    audioOn();
+    const p = G.ast.problem;
+    if (p.options[i] === p.ans) {
+      pad.classList.add('right'); lockPads();
+      G.phase = 'laser'; G.phaseT = 0.32; laserTarget = astPos();
+      sfx.laser();
+    } else {
+      pad.classList.add('wrong'); pad.disabled = true;
+      sfx.wrong();
+      toast(pick(['Fast! Versuch es nochmal.', 'Nicht ganz. Nochmal rechnen!', 'Hmm, probier eine andere Zahl.']), 'bad');
+    }
+  }
+  function explode() {
+    const a = G.ast, pos = astPos(), R = astR();
+    burst(pos.x, pos.y, R, false);
+    floaters.push({ x: pos.x, y: pos.y, text: `${a.problem.text} = ${a.problem.ans}`, life: 1.6, max: 1.6 });
+    sfx.boom();
+    G.score++; G.correct++;
+    G.ast = null;
+    if (G.correct % 8 === 0) {
+      G.level++;
+      setTimeout(() => { if (G.mode === 'play') { toast(`Stufe ${G.level}! Die Asteroiden werden schneller.`, 'info', 2200); sfx.level(); } }, 400);
+    } else if (G.score % 5 === 0) {
+      toast(pick(['Super!', 'Klasse gerechnet!', 'Toll gemacht!', 'Weiter so!']), 'good', 1200);
+    }
+    renderHud();
+    G.phase = 'gap'; G.phaseT = 1.0;
+  }
+  function impact() {
+    const a = G.ast, pos = astPos();
+    burst(pos.x, pos.y, astR(), true);
+    sfx.hit();
+    G.shields--; shieldFlash = 1; shake = RM ? 0 : 0.5;
+    toast(`Autsch! ${a.problem.text} = ${a.problem.ans}`, 'bad', 2400);
+    G.ast = null; lockPads();
+    renderHud();
+    if (G.shields <= 0) { G.phase = 'dying'; G.phaseT = 1.6; }
+    else { G.phase = 'gap'; G.phaseT = 2.0; }
+  }
+
+  // ---------- geometry ----------
+  function geo() {
+    const S = clamp(Math.min(W, H) * 0.12, 30, 64);
+    return { S, sx: W / 2, sy: H - S * 0.8, shieldR: S * 2.1 };
+  }
+  const astR = () => clamp(W * 0.15, 50, 78);
+  function astPos() {
+    const a = G.ast, g = geo(), R = astR();
+    const x0 = a.fx * W, y0 = -R;
+    let dx = x0 - g.sx, dy = y0 - g.sy; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    const tx = g.sx + dx * (g.shieldR + R * 0.7), ty = g.sy + dy * (g.shieldR + R * 0.7);
+    const t = Math.min(1, a.t);
+    return { x: x0 + (tx - x0) * t, y: y0 + (ty - y0) * t };
+  }
+
+  // ---------- particles ----------
+  function burst(x, y, R, isHit) {
+    const n = RM ? 14 : 34;
+    for (let i = 0; i < n; i++) {
+      const ang = rf(0, Math.PI * 2), sp = rf(60, 320);
+      const rock = i % 3 === 0;
+      particles.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: rf(0.5, 1.1), max: 1.1,
+        size: rock ? rf(4, 10) : rf(2, 5), color: rock ? '#8f7a66' : pick(isHit ? [COL.hit, COL.sun, '#ffffff'] : [COL.sun, COL.laser, '#ffffff']), rock, rot: rf(0, 6) });
+    }
+    particles.push({ x, y, vx: 0, vy: 0, life: 0.35, max: 0.35, size: R * 1.6, ring: true, color: isHit ? COL.hit : COL.sun });
+  }
+
+  // ---------- drawing ----------
+  function resize() {
+    const r = cv.parentElement.getBoundingClientRect();
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = Math.max(1, r.width); H = Math.max(1, r.height);
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const n = Math.round(W * H / 2200);
+    stars = Array.from({ length: n }, () => ({ x: Math.random() * W, y: Math.random() * H, z: rf(0.2, 1), tw: rf(0, 6) }));
+  }
+  function drawBackground(dt) {
+    ctx.fillStyle = '#0a0f2c'; ctx.fillRect(0, 0, W, H);
+    let g = ctx.createRadialGradient(W * 0.2, H * 0.3, 0, W * 0.2, H * 0.3, Math.max(W, H) * 0.6);
+    g.addColorStop(0, 'rgba(90,60,170,0.22)'); g.addColorStop(1, 'rgba(90,60,170,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g = ctx.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, Math.max(W, H) * 0.5);
+    g.addColorStop(0, 'rgba(40,140,200,0.14)'); g.addColorStop(1, 'rgba(40,140,200,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // stars drift downward: the station is flying "up"
+    const sp = RM ? 4 : 18;
+    for (const s of stars) {
+      s.y += s.z * sp * dt; if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+      const a = 0.35 + 0.65 * s.z * (0.75 + 0.25 * Math.sin(time * 2 + s.tw));
+      ctx.fillStyle = `rgba(230,238,255,${a.toFixed(3)})`;
+      ctx.fillRect(s.x, s.y, s.z * 2, s.z * 2);
+    }
+    // ringed planet
+    const pr = Math.min(W, H) * 0.11, px = W - pr * 1.1, py = pr * 1.3;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,201,74,0.45)'; ctx.lineWidth = pr * 0.12;
+    ctx.beginPath(); ctx.ellipse(px, py, pr * 1.75, pr * 0.42, -0.35, Math.PI, Math.PI * 2); ctx.stroke();
+    const pg = ctx.createRadialGradient(px - pr * 0.4, py - pr * 0.4, pr * 0.1, px, py, pr);
+    pg.addColorStop(0, '#ff9ec7'); pg.addColorStop(1, '#7a3fa8');
+    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(px, py, pr * 1.75, pr * 0.42, -0.35, 0, Math.PI); ctx.stroke();
+    ctx.restore();
+  }
+  function drawStation(g) {
+    const { S, sx, sy } = g;
+    // shield dome
+    if (G.shields > 0 || shieldFlash > 0) {
+      const strength = G.shields / 3;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(sx, sy, g.shieldR, Math.PI, 0);
+      const sg = ctx.createRadialGradient(sx, sy, g.shieldR * 0.55, sx, sy, g.shieldR);
+      const tint = shieldFlash > 0 ? '255,107,107' : '94,240,255';
+      sg.addColorStop(0, `rgba(${tint},0)`); sg.addColorStop(1, `rgba(${tint},${(0.08 + 0.14 * strength + shieldFlash * 0.3).toFixed(3)})`);
+      ctx.fillStyle = sg; ctx.fill();
+      ctx.lineWidth = 2 + strength * 2;
+      ctx.strokeStyle = `rgba(${tint},${(0.25 + 0.55 * strength + shieldFlash * 0.4).toFixed(3)})`;
+      ctx.setLineDash(G.shields === 1 && shieldFlash <= 0 ? [10, 8] : []);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.save();
+    // truss
+    ctx.fillStyle = '#7d88b3'; ctx.fillRect(sx - S * 1.3, sy - S * 0.07, S * 2.6, S * 0.14);
+    // solar panels
+    for (const side of [-1, 1]) {
+      const x = side < 0 ? sx - S * 2.45 : sx + S * 1.25, y = sy - S * 0.36, w = S * 1.2, h = S * 0.72;
+      ctx.fillStyle = '#2a4db0'; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(160,200,255,0.55)'; ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(x + w * i / 4, y); ctx.lineTo(x + w * i / 4, y + h); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(x, y + h / 2); ctx.lineTo(x + w, y + h / 2); ctx.stroke();
+      ctx.strokeStyle = '#a9c0ff'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+    }
+    // ring
+    ctx.strokeStyle = '#c7d0f2'; ctx.lineWidth = S * 0.1;
+    ctx.beginPath(); ctx.ellipse(sx, sy, S * 0.98, S * 0.3, 0, 0, Math.PI * 2); ctx.stroke();
+    // hub
+    const hg = ctx.createRadialGradient(sx - S * 0.2, sy - S * 0.25, S * 0.05, sx, sy, S * 0.62);
+    hg.addColorStop(0, '#ffffff'); hg.addColorStop(1, '#9aa8d6');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(sx, sy, S * 0.62, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#56629a'; ctx.lineWidth = 2; ctx.stroke();
+    // windows
+    for (let i = 0; i < 3; i++) {
+      const on = G.shields > 0 && Math.sin(time * 1.5 + i * 2) > -0.6;
+      ctx.fillStyle = on ? COL.sun : '#4a5280';
+      ctx.beginPath(); ctx.arc(sx + (i - 1) * S * 0.32, sy + S * 0.18, S * 0.09, 0, Math.PI * 2); ctx.fill();
+    }
+    // cannon
+    const tx = sx, ty = sy - S * 0.42;
+    ctx.save(); ctx.translate(tx, ty); ctx.rotate(cannonAng + Math.PI / 2);
+    ctx.fillStyle = '#3a4478'; ctx.fillRect(-S * 0.12, -S * 0.9, S * 0.24, S * 0.9);
+    ctx.fillStyle = COL.laser; ctx.fillRect(-S * 0.12, -S * 0.98, S * 0.24, S * 0.12);
+    ctx.restore();
+    ctx.fillStyle = '#e8edff'; ctx.beginPath(); ctx.arc(tx, ty, S * 0.26, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#56629a'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+    return { x: tx + Math.cos(cannonAng) * S * 0.95, y: ty + Math.sin(cannonAng) * S * 0.95 };
+  }
+  function drawAsteroid(a, x, y, R, g) {
+    // fiery trail, pointing away from the station
+    let ux = g.sx - x, uy = g.sy - y; const L = Math.hypot(ux, uy) || 1; ux /= L; uy /= L;
+    const px = -uy, py = ux, tl = R * 2.6;
+    const tg = ctx.createLinearGradient(x, y, x - ux * tl, y - uy * tl);
+    tg.addColorStop(0, 'rgba(255,170,80,0.55)'); tg.addColorStop(1, 'rgba(255,110,60,0)');
+    ctx.fillStyle = tg; ctx.beginPath();
+    ctx.moveTo(x + px * R * 0.8, y + py * R * 0.8); ctx.lineTo(x - ux * tl, y - uy * tl); ctx.lineTo(x - px * R * 0.8, y - py * R * 0.8);
+    ctx.closePath(); ctx.fill();
+
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a.rot);
+    ctx.beginPath();
+    a.pts.forEach((m, i) => { const ang = i / a.pts.length * Math.PI * 2; const fx = Math.cos(ang) * R * m, fy = Math.sin(ang) * R * m; i ? ctx.lineTo(fx, fy) : ctx.moveTo(fx, fy); });
+    ctx.closePath();
+    const rg = ctx.createRadialGradient(-R * 0.35, -R * 0.35, R * 0.1, 0, 0, R * 1.05);
+    rg.addColorStop(0, '#bfa88f'); rg.addColorStop(1, '#5e4b3d');
+    ctx.fillStyle = rg; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#33271f'; ctx.stroke();
+    ctx.fillStyle = 'rgba(55,40,30,0.4)';
+    for (const c of a.craters) { ctx.beginPath(); ctx.arc(Math.cos(c.a) * R * c.d, Math.sin(c.a) * R * c.d, R * c.r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+
+    // the problem stays upright so it's easy to read
+    const fs = Math.round(R * 0.5);
+    ctx.font = `800 ${fs}px "Baloo 2", "Trebuchet MS", sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.lineWidth = fs * 0.22; ctx.strokeStyle = '#1f1610';
+    ctx.strokeText(a.problem.text, x, y + fs * 0.08);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(a.problem.text, x, y + fs * 0.08);
+  }
+  function drawEffects(dt) {
+    particles = particles.filter(p => (p.life -= dt) > 0);
+    for (const p of particles) {
+      const k = p.life / p.max;
+      if (p.ring) {
+        ctx.strokeStyle = p.color; ctx.globalAlpha = k; ctx.lineWidth = 6 * k;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - k) + 6, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1; continue;
+      }
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; p.rot += dt * 4;
+      ctx.globalAlpha = Math.min(1, k * 1.5); ctx.fillStyle = p.color;
+      if (p.rock) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); ctx.restore(); }
+      else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1;
+    floaters = floaters.filter(f => (f.life -= dt) > 0);
+    for (const f of floaters) {
+      const k = f.life / f.max, y = f.y - (1 - k) * 50, fs = clamp(W * 0.07, 26, 40);
+      ctx.globalAlpha = Math.min(1, k * 2);
+      ctx.font = `800 ${fs}px "Baloo 2", "Trebuchet MS", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      ctx.lineWidth = fs * 0.2; ctx.strokeStyle = '#0a0f2c'; ctx.strokeText(f.text, f.x, y);
+      ctx.fillStyle = COL.ok; ctx.fillText(f.text, f.x, y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // demo rock shown behind the menu so the first frame shows the idea
+  const demo = { fx: 0, t: 0, rot: 0, vr: 0.15, pts: [1, .9, 1.04, .86, .98, 1.05, .88, .97, 1.02, .9, .95],
+    craters: [{ a: 1, d: .5, r: .14 }, { a: 3, d: .4, r: .18 }, { a: 4.6, d: .55, r: .1 }], problem: { text: '3 + 4' } };
+
+  // ---------- loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+    if (G.mode === 'play') update(dt);
+    shieldFlash = Math.max(0, shieldFlash - dt * 1.5);
+    shake = Math.max(0, shake - dt);
+
+    ctx.save();
+    if (shake > 0) ctx.translate(rf(-1, 1) * shake * 16, rf(-1, 1) * shake * 16);
+    drawBackground(dt);
+    const g = geo();
+    let target = null, apos = null;
+    if (G.ast) { apos = astPos(); target = apos; }
+    else if (G.mode === 'menu') { target = { x: W * 0.3, y: H * 0.3 }; }
+    const want = target ? Math.atan2(target.y - (g.sy - g.S * 0.42), target.x - g.sx) : -Math.PI / 2;
+    cannonAng += (want - cannonAng) * Math.min(1, dt * 10);
+    if (G.mode === 'menu') { demo.rot += demo.vr * dt; drawAsteroid(demo, W * 0.3, H * 0.3 + Math.sin(time) * 6, astR(), g); }
+    if (G.ast) drawAsteroid(G.ast, apos.x, apos.y, astR(), g);
+    const tip = drawStation(g);
+    if (G.phase === 'laser' && laserTarget) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = COL.laser; ctx.lineWidth = 9; ctx.globalAlpha = 0.45;
+      ctx.beginPath(); ctx.moveTo(tip.x, tip.y); ctx.lineTo(laserTarget.x, laserTarget.y); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.restore();
+    }
+    drawEffects(dt);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  function update(dt) {
+    if (G.phase === 'fly' && G.ast) {
+      G.ast.t += dt / G.ast.dur; G.ast.rot += G.ast.vr * dt;
+      if (G.ast.t >= 1) impact();
+    } else if (G.phase === 'laser') {
+      if (G.ast) { G.ast.rot += G.ast.vr * dt; laserTarget = astPos(); }
+      if ((G.phaseT -= dt) <= 0) explode();
+    } else if (G.phase === 'gap') {
+      if ((G.phaseT -= dt) <= 0) spawn();
+    } else if (G.phase === 'dying') {
+      if (Math.random() < dt * 10) { const g = geo(); burst(g.sx + rf(-g.S, g.S), g.sy + rf(-g.S * .5, g.S * .3), g.S * .5, true); }
+      if ((G.phaseT -= dt) <= 0) gameOver();
+    }
+  }
+
+  // ---------- events ----------
+  pads.forEach((p, i) => p.addEventListener('click', () => answer(i)));
+  window.addEventListener('keydown', e => {
+    const k = { '1': 0, '2': 1, '3': 2 }[e.key];
+    if (k !== undefined) { answer(k); return; }
+    if (e.key === 'Enter' && G.mode !== 'play' && document.activeElement === document.body) startGame(false);
+  });
+  $('#opsChips').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    const op = c.dataset.op, has = settings.ops.includes(op);
+    if (has && settings.ops.length === 1) { toast('Mindestens eine Rechenart bleibt an.', 'info'); return; }
+    settings.ops = has ? settings.ops.filter(o => o !== op) : [...settings.ops, op];
+    store.set('aa-settings', settings); renderSettings();
+  });
+  $('#maxChips').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    settings.max = +c.dataset.max; store.set('aa-settings', settings); renderSettings();
+  });
+  $('#tempoChips').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    settings.tempo = c.dataset.tempo; store.set('aa-settings', settings); renderSettings();
+  });
+  $('#startBtn').addEventListener('click', () => startGame(false));
+  $('#againBtn').addEventListener('click', () => startGame(false));
+  $('#toMenuBtn').addEventListener('click', toMenu);
+  $('#menuBtn').addEventListener('click', toMenu);
+  $('#soundBtn').addEventListener('click', () => { muted = !muted; store.set('aa-muted', muted); renderSound(); audioOn(); });
+
+  // keep progress across live updates of the page
+  if (window.claude?.hot?.snapshot) {
+    window.claude.hot.snapshot(() => ({ settings, score: G.score, correct: G.correct, shields: G.shields, level: G.level, mode: G.mode }));
+  }
+  function start(data) {
+    new ResizeObserver(resize).observe(cv.parentElement);
+    resize();
+    if (data && data.settings) settings = Object.assign(settings, data.settings);
+    renderSettings(); renderSound(); renderHud(); renderPads(['6', '7', '9'], false);
+    if (data && data.mode === 'play' && data.shields > 0) {
+      Object.assign(G, { score: data.score, correct: data.correct, shields: data.shields, level: data.level });
+      startGame(true);
+    }
+    requestAnimationFrame(t => { last = t; frame(t); });
+  }
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+</html>

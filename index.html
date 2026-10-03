@@ -1,0 +1,197 @@
+<title>Spielekiste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Andika:wght@400;700&display=swap">
+<style>
+/* Layout: kurze Kopfzeile, darunter vier Spiel-Kacheln wie Spieleschachteln – jede in den Farben ihrer eigenen Spielwelt */
+:root{
+  --ground:#e4f1f6;
+  --dot:#c9e0ea;
+  --ink:#1d2f45;
+  --muted:#53697f;
+  --chip:#ffffff;
+  --focus:#ff7a3d;
+  --display:"Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --body:"Andika", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ground:#111a2b; --dot:#1c2a42; --ink:#eaf2fb; --muted:#9db0c6; --chip:#1c2a42; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --ground:#111a2b; --dot:#1c2a42; --ink:#eaf2fb; --muted:#9db0c6; --chip:#1c2a42; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.55;
+  background-image:radial-gradient(var(--dot) 1.6px, transparent 1.7px); background-size:22px 22px;
+}
+.wrap{max-width:1080px; margin:0 auto; padding-inline:16px; padding-block:40px 56px}
+header{display:grid; gap:6px; margin-bottom:32px}
+h1{font-family:var(--display); font-weight:800; font-size:clamp(2.6rem,7vw,4.2rem); line-height:1; margin:0; letter-spacing:-.01em; text-wrap:balance}
+h1 span{display:inline-block; transform:rotate(-3deg); color:var(--focus)}
+header p{margin:0; color:var(--muted); max-width:52ch; font-size:1.1rem}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr)); gap:24px}
+.game{
+  --c-bg:#000; --c-ink:#fff; --c-soft:#ccc; --c-btn:#fff; --c-btn-ink:#000;
+  background:var(--c-bg); color:var(--c-ink); border-radius:22px; overflow:hidden;
+  display:grid; grid-template-rows:auto 1fr; box-shadow:0 10px 0 -2px rgba(0,0,0,.18);
+  transition:transform .18s ease;
+}
+.game:hover{transform:translateY(-4px) rotate(-.4deg)}
+.scene{display:block; width:100%; height:auto; aspect-ratio:16/8; max-width:100%}
+.info{padding:20px 22px 22px; display:grid; gap:12px; align-content:start; min-width:0}
+.info h2{font-family:var(--display); font-weight:800; font-size:1.75rem; line-height:1.05; margin:0; text-wrap:balance}
+.info p{margin:0; color:var(--c-soft)}
+.tags{display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:0; list-style:none}
+.tags li{font-size:.8rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:3px 10px; border-radius:99px; border:1.5px solid currentColor; color:var(--c-soft)}
+.play{
+  justify-self:start; margin-top:4px; font-family:var(--display); font-weight:800; font-size:1.2rem; text-decoration:none;
+  background:var(--c-btn); color:var(--c-btn-ink); padding:8px 22px 6px; border-radius:14px; box-shadow:0 4px 0 rgba(0,0,0,.28);
+}
+.play:hover{filter:brightness(1.06)}
+.play:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.play:focus-visible,.game a:focus-visible{outline:3px solid var(--focus); outline-offset:3px}
+
+/* Spielwelten – bewusst feste Farben, wie in den Spielen selbst */
+.g-asteroiden{--c-bg:#0a0f2c; --c-ink:#eef3ff; --c-soft:#b4bde6; --c-btn:#ffd23f; --c-btn-ink:#0a0f2c}
+.g-katzen{--c-bg:#2a2152; --c-ink:#fff6e6; --c-soft:#d9cdf2; --c-btn:#ff8fb3; --c-btn-ink:#2a2152}
+.g-leo{--c-bg:#0a2c4e; --c-ink:#fff7e3; --c-soft:#bfe3f7; --c-btn:#ffc93c; --c-btn-ink:#0a2c4e}
+.g-insel{--c-bg:#fffdf7; --c-ink:#33302b; --c-soft:#5d6b67; --c-btn:#f07a2a; --c-btn-ink:#ffffff}
+
+footer{margin-top:36px; color:var(--muted); font-size:.95rem; max-width:60ch}
+
+@keyframes drift{from{transform:translate(0,0)} to{transform:translate(-14px,10px)}}
+@keyframes bob{0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)}}
+@keyframes blink{0%,92%,100%{opacity:1} 95%{opacity:.2}}
+.drift{animation:drift 3.5s ease-in-out infinite alternate}
+.bob{animation:bob 3s ease-in-out infinite}
+.blink{animation:blink 2.6s infinite}
+@media (prefers-reduced-motion: reduce){ .drift,.bob,.blink{animation:none} .game{transition:none} }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Spiele<span>kiste</span></h1>
+    <p>Vier kleine Lernspiele für Kinder. Läuft direkt im Browser, auf Tablet, Handy und Computer. Keine Anmeldung, keine Werbung.</p>
+  </header>
+
+  <main class="grid">
+
+    <article class="game g-asteroiden">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Ein Asteroid mit der Aufgabe 7 plus 5 fliegt auf eine Raumstation zu">
+        <rect width="320" height="160" fill="#0a0f2c"/>
+        <g fill="#eef3ff" opacity=".7"><circle cx="30" cy="20" r="1.2"/><circle cx="90" cy="48" r="1"/><circle cx="150" cy="14" r="1.4"/><circle cx="250" cy="30" r="1"/><circle cx="290" cy="80" r="1.3"/><circle cx="60" cy="100" r="1"/><circle cx="200" cy="62" r="1"/></g>
+        <g class="drift">
+          <path d="M196 30 l26 -6 l20 12 l4 24 l-16 18 l-26 2 l-16 -18 z" fill="#8a7a6a" stroke="#5e5146" stroke-width="3"/>
+          <circle cx="232" cy="40" r="4" fill="#6e6155"/>
+          <text x="220" y="60" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="18" fill="#fff">7 + 5</text>
+        </g>
+        <line x1="118" y1="124" x2="196" y2="66" stroke="#ff5d8f" stroke-width="3" stroke-linecap="round" class="blink"/>
+        <path d="M60 160 q60 -56 120 0 z" fill="#151c4d" stroke="#2c3672" stroke-width="3"/>
+        <rect x="104" y="118" width="32" height="14" rx="4" fill="#ffd23f"/>
+        <g font-family="Baloo 2, sans-serif" font-weight="800" font-size="15" text-anchor="middle">
+          <rect x="196" y="122" width="34" height="26" rx="7" fill="#151c4d" stroke="#2c3672" stroke-width="2"/><text x="213" y="141" fill="#eef3ff">11</text>
+          <rect x="236" y="122" width="34" height="26" rx="7" fill="#ffd23f"/><text x="253" y="141" fill="#0a0f2c">12</text>
+          <rect x="276" y="122" width="34" height="26" rx="7" fill="#151c4d" stroke="#2c3672" stroke-width="2"/><text x="293" y="141" fill="#eef3ff">14</text>
+        </g>
+      </svg>
+      <div class="info">
+        <h2>Asteroiden-Abwehr</h2>
+        <p>Asteroiden rasen auf die Raumstation zu. Auf jedem Stein steht eine Rechenaufgabe. Wer das richtige Ergebnis antippt, feuert den Laser ab.</p>
+        <ul class="tags"><li>Rechnen</li><li>Plus · Minus · Mal</li><li>bis 10 oder 20</li></ul>
+        <a class="play" href="spiele/asteroiden-abwehr.html">Spielen</a>
+      </div>
+    </article>
+
+    <article class="game g-katzen">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Eine Babykatze und ein kleiner Vampir unter dem Mond auf einem Hügel">
+        <defs><linearGradient id="nacht" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2152"/><stop offset="1" stop-color="#5b3f86"/></linearGradient></defs>
+        <rect width="320" height="160" fill="url(#nacht)"/>
+        <circle cx="262" cy="34" r="18" fill="#ffe8a8"/>
+        <g fill="#fff" opacity=".6"><circle cx="40" cy="22" r="1.3"/><circle cx="120" cy="12" r="1"/><circle cx="180" cy="40" r="1.2"/><circle cx="300" cy="74" r="1"/></g>
+        <path d="M0 160 V122 Q160 84 320 122 V160 Z" fill="#3d6b5c"/>
+        <g class="bob">
+          <path d="M80 82 l8 -18 l10 14 z M118 82 l-8 -18 l-10 14 z" fill="#ff8fb3"/>
+          <ellipse cx="99" cy="96" rx="26" ry="22" fill="#ff8fb3"/>
+          <circle cx="90" cy="92" r="3.5" fill="#2a2152"/><circle cx="108" cy="92" r="3.5" fill="#2a2152"/>
+          <path d="M95 101 q4 4 8 0" stroke="#2a2152" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        </g>
+        <g>
+          <path d="M196 104 q-30 -8 -38 -26 q20 6 30 4 z M240 104 q30 -8 38 -26 q-20 6 -30 4 z" fill="#4a3a6e"/>
+          <circle cx="218" cy="98" r="22" fill="#cfe7d7"/>
+          <path d="M196 92 q22 -26 44 0 q-22 -8 -44 0 z" fill="#2a2152"/>
+          <circle cx="210" cy="100" r="3" fill="#2a2152"/><circle cx="226" cy="100" r="3" fill="#2a2152"/>
+          <path d="M212 110 q6 -4 12 0" stroke="#2a2152" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          <path d="M213 108 l2 4 l2 -4 M219 108 l2 4 l2 -4" fill="#fff"/>
+          <circle cx="232" cy="106" r="2.4" fill="#8fd3ff" class="blink"/>
+        </g>
+      </svg>
+      <div class="info">
+        <h2>Ellas Babykatzen gegen Babyvampire</h2>
+        <p>Nachts machen kleine Vampire Unfug. Such dir eine mutige Babykatze aus und schick die Vampirchen zurück zu ihrer Mama. Die Geschichte wird auf Wunsch vorgelesen.</p>
+        <ul class="tags"><li>Geschichte</li><li>Vorlesen</li><li>Rundenkampf</li></ul>
+        <a class="play" href="spiele/ellas-babykatzen.html">Spielen</a>
+      </div>
+    </article>
+
+    <article class="game g-leo">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Ein kleiner Fischkutter angelt auf dem Meer, unter Wasser schwimmen Fische">
+        <rect width="320" height="70" fill="#8fd6ff"/>
+        <circle cx="270" cy="26" r="15" fill="#ffc93c"/>
+        <rect y="70" width="320" height="90" fill="#1f6fa8"/>
+        <rect y="110" width="320" height="50" fill="#0a2c4e" opacity=".55"/>
+        <g class="bob">
+          <path d="M70 62 h86 l-12 18 h-62 z" fill="#ff6b4a"/>
+          <rect x="94" y="44" width="30" height="18" rx="3" fill="#fff7e3"/>
+          <rect x="100" y="49" width="8" height="7" fill="#8fd6ff"/>
+          <line x1="138" y1="62" x2="138" y2="22" stroke="#9c6b3f" stroke-width="3"/>
+          <path d="M138 24 l14 5 l-14 5 z" fill="#2f9e44"/>
+          <path d="M150 50 Q190 30 204 56" stroke="#173451" stroke-width="2" fill="none"/>
+        </g>
+        <line x1="204" y1="56" x2="204" y2="112" stroke="#fff7e3" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <path d="M200 112 q4 6 8 0" stroke="#fff7e3" stroke-width="2" fill="none"/>
+        <g class="drift">
+          <ellipse cx="236" cy="118" rx="16" ry="8" fill="#ffc93c"/><path d="M252 118 l10 -7 v14 z" fill="#ffc93c"/><circle cx="228" cy="116" r="2" fill="#0a2c4e"/>
+        </g>
+        <ellipse cx="60" cy="132" rx="12" ry="6" fill="#ff6b4a"/><path d="M48 132 l-8 -5 v10 z" fill="#ff6b4a"/><circle cx="66" cy="130" r="1.6" fill="#0a2c4e"/>
+        <ellipse cx="150" cy="146" rx="10" ry="5" fill="#bfe3f7"/><path d="M160 146 l7 -4 v8 z" fill="#bfe3f7"/>
+      </svg>
+      <div class="info">
+        <h2>Kapitän Leo</h2>
+        <p>Raus aufs Meer mit dem kleinen Kutter. Fang Fische, verkauf sie im Hafen und bau in der Werft dein Boot immer größer aus.</p>
+        <ul class="tags"><li>Angeln</li><li>Münzen sparen</li><li>Tastatur oder Maus</li></ul>
+        <a class="play" href="spiele/kapitaen-leo.html">Spielen</a>
+      </div>
+    </article>
+
+    <article class="game g-insel">
+      <svg class="scene" viewBox="0 0 320 160" role="img" aria-label="Fuchs Fritzi auf einer kleinen Insel, daneben der Buchstabe A und ein Apfel">
+        <rect width="320" height="160" fill="#bfe6e0"/>
+        <rect y="108" width="320" height="52" fill="#7cc7c0"/>
+        <g class="drift" opacity=".9"><ellipse cx="70" cy="30" rx="22" ry="9" fill="#fff"/><ellipse cx="250" cy="22" rx="18" ry="7" fill="#fff"/></g>
+        <ellipse cx="130" cy="112" rx="92" ry="20" fill="#f3d9a4"/>
+        <path d="M80 104 q-4 -40 4 -60" stroke="#8a5a32" stroke-width="5" fill="none"/>
+        <path d="M84 46 q-26 -6 -36 8 M84 46 q24 -10 34 4 M84 46 q-10 -18 -28 -18 M84 46 q14 -20 32 -14" stroke="#2f9e5b" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <g class="bob">
+          <path d="M130 98 q0 -26 20 -26 q20 0 20 26 z" fill="#f07a2a"/>
+          <path d="M136 76 l4 -14 l8 10 z M164 76 l-4 -14 l-8 10 z" fill="#f07a2a"/>
+          <path d="M140 86 q10 12 20 0 q-10 -4 -20 0 z" fill="#fffdf7"/>
+          <circle cx="144" cy="80" r="2.4" fill="#33302b"/><circle cx="156" cy="80" r="2.4" fill="#33302b"/><circle cx="150" cy="88" r="2" fill="#33302b"/>
+        </g>
+        <rect x="222" y="54" width="56" height="62" rx="10" fill="#fffaf0" stroke="#e6c08f" stroke-width="3" transform="rotate(4 250 85)"/>
+        <circle cx="250" cy="82" r="14" fill="#e3463b"/><path d="M250 68 q4 -8 10 -8" stroke="#2f9e5b" stroke-width="3" fill="none"/>
+        <g transform="rotate(-6 200 130)"><rect x="186" y="116" width="30" height="30" rx="6" fill="#fffaf0" stroke="#e6c08f" stroke-width="3"/><text x="201" y="139" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="22" fill="#33302b">A</text></g>
+      </svg>
+      <div class="info">
+        <h2>Die Wort-Insel</h2>
+        <p>Ein Sturm hat Fritzis Insel leergefegt. Hör genau hin, finde den Anfangslaut von Apfel, Boot oder Igel, und Stück für Stück kehrt alles zurück. Mit echter Sprecherstimme.</p>
+        <ul class="tags"><li>Anfangslaute</li><li>Lesen lernen</li><li>Ton an</li></ul>
+        <a class="play" href="spiele/wort-insel/index.html">Spielen</a>
+      </div>
+    </article>
+
+  </main>
+
+  <footer>Tipp: Auf dem Tablet quer halten und den Ton anschalten. Der Spielstand bleibt auf diesem Gerät gespeichert.</footer>
+</div>

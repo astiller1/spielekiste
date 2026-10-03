@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kapitän Leo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap">
+<style>
+  :root {
+    --sky: #8fd6ff;
+    --deep: #0a2c4e;
+    --sun: #ffc93c;
+    --sun-dark: #c98f00;
+    --coral: #ff6b4a;
+    --paper: #fff7e3;
+    --ink: #173451;
+    --wood: #9c6b3f;
+    --green: #2f9e44;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--deep); color: var(--ink);
+    font-family: 'Nunito', system-ui, sans-serif; overflow: hidden;
+    overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  #sea { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible { outline: 4px solid #fff; outline-offset: 3px; }
+
+  .hud {
+    position: absolute; left: 0; right: 0; top: 0;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    padding: 12px 16px; pointer-events: none;
+  }
+  .hud > * { pointer-events: auto; }
+  .pill {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255, 247, 227, .94); border: 3px solid #fff; border-radius: 999px;
+    box-shadow: 0 4px 0 rgba(23, 52, 81, .28);
+  }
+  .coins { padding: 5px 16px 5px 6px; }
+  .coin {
+    width: 34px; height: 34px; border-radius: 50%; flex: none; position: relative; box-sizing: border-box;
+    background: radial-gradient(circle at 35% 30%, #fff6c2 0 16%, #ffd23f 17% 62%, #e9a800 63%);
+    border: 3px solid #b77b00;
+  }
+  .coin::after { content: ""; position: absolute; inset: 5px; border: 2px solid rgba(183, 123, 0, .5); border-radius: 50%; }
+  .coin.sm { width: 24px; height: 24px; border-width: 2px; }
+  .coin.sm::after { inset: 3px; border-width: 1.5px; }
+  #coinNum { font-family: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif; font-size: 30px; line-height: 1; min-width: 1.4ch; font-variant-numeric: tabular-nums; }
+  .coins.bump { animation: bump .35s ease; }
+  @keyframes bump { 50% { transform: scale(1.12); } }
+
+  .crate { padding: 6px 10px; gap: 5px; flex-wrap: wrap; justify-content: center; border-radius: 18px; max-width: 46vw; }
+  .crate-label { font-weight: 900; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #7a4e24; margin-right: 2px; }
+  .slot { width: 32px; height: 24px; border-radius: 6px; background: #c69157; border: 2px solid #7a4e24; box-sizing: border-box; }
+  .slot.full { background: #f3d6a4; }
+  .slot canvas { width: 100%; height: 100%; display: block; }
+  .crate.full { animation: wiggle .6s ease infinite; background: #ffe3dc; }
+  @keyframes wiggle { 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
+
+  .btns { display: flex; gap: 10px; align-items: flex-start; }
+  .round {
+    width: 52px; height: 52px; border-radius: 50%; border: 3px solid #fff; background: rgba(255, 247, 227, .94);
+    box-shadow: 0 4px 0 rgba(23, 52, 81, .28); cursor: pointer; display: grid; place-items: center; padding: 0;
+  }
+  .round svg { width: 26px; height: 26px; }
+  .shop-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 0; cursor: pointer;
+    background: var(--sun); border: 4px solid #fff; border-radius: 22px; padding: 4px 12px 6px;
+    font-family: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif; font-size: 18px; letter-spacing: .02em;
+    box-shadow: 0 5px 0 var(--sun-dark);
+  }
+  .shop-btn canvas { width: 56px; height: 34px; display: block; }
+  .shop-btn.glow { animation: hop 1s ease-in-out infinite; }
+  @keyframes hop { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-5px) scale(1.07); } }
+
+  @media (max-width: 560px) {
+    .hud { flex-wrap: wrap; }
+    .crate { order: 3; max-width: none; flex-basis: 100%; justify-content: flex-start; }
+    #coinNum { font-size: 26px; }
+  }
+
+  /* Werft (shop) */
+  .overlay {
+    position: absolute; inset: 0; background: rgba(10, 44, 78, .55);
+    display: flex; align-items: flex-end; justify-content: center; padding: 16px; box-sizing: border-box;
+  }
+  .sheet {
+    background: var(--paper); border: 5px solid #fff; border-radius: 30px; width: 100%; max-width: 900px;
+    max-height: 100%; overflow: auto; box-sizing: border-box; padding: 18px 18px 14px;
+    box-shadow: 0 10px 0 rgba(10, 44, 78, .35); animation: rise .3s ease-out;
+  }
+  @keyframes rise { from { transform: translateY(40px); opacity: .4; } }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .sheet h2 { font-family: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif; font-weight: 400; font-size: 34px; margin: 0; letter-spacing: .01em; }
+  .wallet { display: flex; align-items: center; gap: 6px; font-family: 'Lilita One', system-ui, sans-serif; font-size: 26px; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .x { width: 52px; height: 52px; border-radius: 50%; border: 3px solid #fff; background: var(--coral); color: #fff; font-size: 30px; font-weight: 900; cursor: pointer; line-height: 1; box-shadow: 0 4px 0 #c4442a; flex: none; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  .card {
+    position: relative; background: #fff; border: 3px solid #f0dcb0; border-radius: 22px; padding: 10px 10px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; overflow: hidden;
+  }
+  .card canvas { width: 120px; height: 84px; max-width: 100%; }
+  .card h3 { font-family: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif; font-weight: 400; font-size: 24px; margin: 0; }
+  .card p { margin: 0; font-size: 14px; font-weight: 800; color: #5b6f84; min-height: 2.4em; text-wrap: balance; }
+  .pips { display: flex; gap: 5px; margin: 2px 0 6px; }
+  .pip { width: 13px; height: 13px; border-radius: 50%; background: #eadfc6; border: 2px solid #d8c59c; }
+  .pip.on { background: var(--green); border-color: #1f7a3a; }
+  .buy {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    border: 3px solid #fff; border-radius: 16px; padding: 8px 6px; background: var(--sun);
+    font-family: 'Lilita One', system-ui, sans-serif; font-size: 24px; box-shadow: 0 4px 0 var(--sun-dark);
+    font-variant-numeric: tabular-nums;
+  }
+  .buy.poor { background: #e7e1d3; box-shadow: 0 4px 0 #bdb39c; color: #8a8270; }
+  .buy.done { background: #8ce99a; box-shadow: 0 4px 0 #2f9e44; cursor: default; }
+  .buy:active:not(.done) { transform: translateY(3px); box-shadow: 0 1px 0 var(--sun-dark); }
+  .card.shake { animation: shake .4s ease; }
+  @keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  .card.pop { animation: pop .5s ease; }
+  @keyframes pop { 40% { transform: scale(1.06); } }
+  .confetti { position: absolute; width: 9px; height: 13px; border-radius: 2px; left: 50%; top: 40%; pointer-events: none; animation: conf .9s ease-out forwards; }
+  @keyframes conf { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; } }
+
+  .album { margin-top: 16px; }
+  .album h3 { font-family: 'Lilita One', system-ui, sans-serif; font-weight: 400; font-size: 22px; margin: 0 0 8px; }
+  .album-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 8px; }
+  .af { background: #e3f4fc; border-radius: 14px; padding: 4px 4px 6px; text-align: center; font-size: 12px; font-weight: 800; color: #4a6680; }
+  .af.got { background: #d3f9d8; color: var(--ink); }
+  .af canvas { width: 72px; height: 46px; display: block; margin: 0 auto; }
+  .af b { display: block; font-size: 13px; }
+  .parents { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .reset { background: none; border: 2px dashed #c7b892; border-radius: 12px; padding: 6px 12px; font-size: 13px; font-weight: 800; color: #8a7d5c; cursor: pointer; }
+  .reset.armed { border-style: solid; border-color: var(--coral); color: #c4442a; background: #fff0ec; }
+
+  /* Start */
+  .start { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(10, 44, 78, .35); box-sizing: border-box; }
+  .start-card { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 520px; }
+  .start h1 {
+    margin: 0; font-family: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif; font-weight: 400;
+    font-size: clamp(44px, 11vw, 86px); line-height: .95; color: #fff; letter-spacing: .01em; text-wrap: balance;
+    text-shadow: 0 5px 0 var(--ink), 0 0 0 var(--ink); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
+  }
+  .start h1 span { color: var(--sun); display: block; }
+  .start p { margin: 0; font-size: 18px; font-weight: 800; color: #fff; text-shadow: 0 2px 0 var(--ink); max-width: 30ch; text-wrap: balance; }
+  .keys { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-weight: 800; font-size: 15px; color: #fff; text-shadow: 0 2px 0 var(--ink); }
+  .keys li { display: flex; align-items: center; gap: 4px; }
+  kbd { font-family: inherit; font-size: 14px; background: var(--paper); color: var(--ink); text-shadow: none; border-radius: 7px; padding: 2px 8px; box-shadow: 0 3px 0 rgba(23, 52, 81, .5); }
+  @media (hover: none) { .keys { display: none; } }
+  .play {
+    width: 120px; height: 120px; border-radius: 50%; border: 6px solid #fff; background: var(--coral); cursor: pointer;
+    box-shadow: 0 8px 0 #c4442a; display: grid; place-items: center; animation: hop 1.2s ease-in-out infinite;
+  }
+  .play svg { width: 54px; height: 54px; margin-left: 8px; }
+  @media (prefers-reduced-motion: reduce) {
+    .play, .shop-btn.glow, .crate.full { animation: none; }
+  }
+</style>
+
+<div id="app">
+  <canvas id="sea" aria-label="Meer mit Fischen. Tippe auf einen Fisch, um ihn zu angeln."></canvas>
+
+  <div class="hud">
+    <div class="pill coins" id="coins" aria-live="polite"><span class="coin"></span><span id="coinNum">0</span></div>
+    <div class="pill crate" id="crate" aria-label="Fischkiste"></div>
+    <div class="btns">
+      <button class="round" id="soundBtn" aria-label="Ton aus"></button>
+      <button class="shop-btn" id="shopBtn"><canvas id="shopIco" width="112" height="68"></canvas>Werft</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="shop" hidden>
+    <div class="sheet" role="dialog" aria-label="Werft">
+      <div class="sheet-head">
+        <h2>Werft</h2>
+        <div class="wallet"><span class="coin sm"></span><span id="walletNum">0</span></div>
+        <button class="x" id="closeShop" aria-label="Schließen">×</button>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="album">
+        <h3>Meine Fische</h3>
+        <div class="album-row" id="albumRow"></div>
+      </div>
+      <div class="parents"><button class="reset" id="resetBtn">Neues Spiel</button></div>
+    </div>
+  </div>
+
+  <div class="start" id="start">
+    <div class="start-card">
+      <h1>Kapitän <span>Leo</span></h1>
+      <p>Fang Fische, verkauf sie im Hafen und bau dein Boot aus!</p>
+      <ul class="keys" aria-label="Tastatur">
+        <li><kbd>←</kbd><kbd>→</kbd> fahren</li>
+        <li><kbd>Leertaste</kbd> angeln</li>
+        <li><kbd>↑</kbd> zum Hafen</li>
+        <li><kbd>W</kbd> Werft</li>
+      </ul>
+      <button class="play" id="playBtn" aria-label="Spielen">
+        <svg viewBox="0 0 24 24"><path d="M5 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 5 3.5z" fill="#fff"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const cv = $('#sea'), ctx = cv.getContext('2d');
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const TAU = Math.PI * 2;
+
+/* ---------- Spieldaten ---------- */
+const UP = {
+  boat:  { name: 'Boot',  desc: 'Mehr Platz für Fische', vals: [3, 5, 7, 10, 14], price: [12, 35, 80, 180], said: 'Dein Boot ist jetzt größer!' },
+  line:  { name: 'Angel', desc: 'Tiefer angeln',         vals: [0, 1, 2, 3],      price: [10, 30, 80],      said: 'Jetzt kannst du tiefer angeln!' },
+  motor: { name: 'Motor', desc: 'Schneller fahren',      vals: [110, 160, 230, 320, 420], price: [6, 20, 50, 120], said: 'Dein Boot fährt jetzt schneller!' },
+  bait:  { name: 'Köder', desc: 'Mehr Fische im Meer',   vals: [0, 1, 2, 3],      price: [15, 45, 110],     said: 'Jetzt kommen mehr Fische!' },
+};
+const FT = {
+  sardine: { name: 'Sardine',       ein: 'Eine Sardine',       zone: 0, value: 1,  len: 30, speed: 55, color: '#ff9f43', w: 3 },
+  blue:    { name: 'Blaufisch',     ein: 'Ein Blaufisch',      zone: 0, value: 2,  len: 38, speed: 45, color: '#3fa7f0', w: 2 },
+  stripe:  { name: 'Streifenfisch', ein: 'Ein Streifenfisch',  zone: 1, value: 3,  len: 42, speed: 40, color: '#5ccf6b', w: 3 },
+  puffer:  { name: 'Kugelfisch',    ein: 'Ein Kugelfisch',     zone: 1, value: 5,  len: 36, speed: 22, color: '#ffd43b', w: 2 },
+  tuna:    { name: 'Thunfisch',     ein: 'Ein Thunfisch',      zone: 2, value: 8,  len: 64, speed: 70, color: '#4c6ef5', w: 3 },
+  octo:    { name: 'Tintenfisch',   ein: 'Ein Tintenfisch',    zone: 2, value: 10, len: 40, speed: 24, color: '#f06595', w: 2 },
+  angler:  { name: 'Anglerfisch',   ein: 'Ein Anglerfisch',    zone: 3, value: 15, len: 54, speed: 20, color: '#6a5a8c', w: 3 },
+  chest:   { name: 'Schatzkiste',   ein: 'Eine Schatzkiste',   zone: 3, value: 30, len: 46, speed: 0,  color: '#a0632b', w: 0 },
+  gold:    { name: 'Goldfisch',     ein: 'Ein Goldfisch',      zone: -1, value: 12, len: 34, speed: 60, color: '#ffcf33', w: 0 },
+};
+const ORDER = ['sardine', 'blue', 'stripe', 'puffer', 'tuna', 'octo', 'angler', 'chest', 'gold'];
+const BOATS = [
+  { w: 76,  hull: '#a86b3c', trim: '#7a4a24' },
+  { w: 90,  hull: '#2b7bb9', trim: '#ffffff' },
+  { w: 104, hull: '#e8590c', trim: '#ffffff' },
+  { w: 118, hull: '#c2255c', trim: '#ffe066' },
+  { w: 134, hull: '#1c7c54', trim: '#ffe066' },
+];
+
+/* ---------- Speicher ---------- */
+const KEY = 'kapitaen-fischkutter-v1';
+const fresh = () => ({ coins: 0, lv: { boat: 0, line: 0, motor: 0, bait: 0 }, album: {}, caught: 0, sold: 0 });
+let save = fresh();
+let crate = [];
+function load(data) {
+  let d = data;
+  if (!d) { try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; } }
+  if (d && d.save) { crate = Array.isArray(d.crate) ? d.crate.filter(k => FT[k]) : []; d = d.save; }
+  else if (d && Array.isArray(d.crate)) crate = d.crate.filter(k => FT[k]);
+  if (d && typeof d.coins === 'number') {
+    const s = fresh();
+    s.coins = Math.max(0, d.coins | 0);
+    for (const k in s.lv) s.lv[k] = clamp((d.lv && d.lv[k]) | 0, 0, UP[k].vals.length - 1);
+    s.album = d.album || {}; s.caught = d.caught | 0; s.sold = d.sold | 0;
+    save = s;
+  }
+  crate = crate.slice(0, cap());
+}
+function persist() { try { localStorage.setItem(KEY, JSON.stringify({ save, crate })); } catch (e) {} }
+const cap = () => UP.boat.vals[save.lv.boat];
+
+/* ---------- Ton & Sprache ---------- */
+let AC = null, soundOn = true;
+function ensureAudio() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (AC && AC.state === 'suspended') AC.resume();
+}
+function tone(f, d, type = 'sine', vol = .2, f2 = null, delay = 0) {
+  if (!AC || !soundOn) return;
+  const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + d);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .015);
+  g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+  o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + d + .05);
+}
+const sfx = {
+  plop()  { tone(520, .2, 'sine', .25, 130); },
+  splash(){ tone(260, .14, 'triangle', .14, 700); },
+  catch() { [523, 659, 784].forEach((f, i) => tone(f, .16, 'triangle', .2, null, i * .08)); },
+  coin()  { tone(988, .07, 'square', .06); tone(1319, .2, 'square', .06, null, .06); },
+  buy()   { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .22, 'triangle', .2, null, i * .09)); },
+  fail()  { tone(240, .4, 'sawtooth', .07, 110); },
+  nope()  { tone(200, .18, 'square', .05); tone(160, .2, 'square', .05, null, .12); },
+};
+let deVoice = null;
+function pickVoice() { try { deVoice = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('de')) || null; } catch (e) {} }
+try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
+function say(text, interrupt = true) {
+  if (!soundOn || !('speechSynthesis' in window)) return;
+  try {
+    if (interrupt) speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'de-DE'; u.rate = .95; u.pitch = 1.15;
+    if (deVoice) u.voice = deVoice;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ---------- Zeichen-Helfer ---------- */
+function shade(hex, p) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
+  const t = p < 0 ? 0 : 255, a = Math.abs(p);
+  r = Math.round(r + (t - r) * a); g = Math.round(g + (t - g) * a); b = Math.round(b + (t - b) * a);
+  return `rgb(${r},${g},${b})`;
+}
+function ell(c, x, y, rx, ry, rot = 0) { c.beginPath(); c.ellipse(x, y, Math.max(.1, rx), Math.max(.1, ry), rot, 0, TAU); }
+function circ(c, x, y, r) { c.beginPath(); c.arc(x, y, Math.max(.1, r), 0, TAU); }
+function rr(c, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function eye(c, x, y, r) {
+  c.fillStyle = '#fff'; circ(c, x, y, r); c.fill();
+  c.fillStyle = '#14213d'; circ(c, x + r * .3, y, r * .55); c.fill();
+  c.fillStyle = '#fff'; circ(c, x + r * .45, y - r * .25, r * .2); c.fill();
+}
+function star(c, x, y, r, rot) {
+  c.beginPath();
+  for (let i = 0; i < 8; i++) { const a = rot + i * Math.PI / 4, rad = i % 2 ? r * .35 : r; c.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad); }
+  c.closePath(); c.fill();
+}
+
+/* Fisch, Kopf zeigt nach rechts, Ursprung = Mitte */
+function basicFish(c, L, col, t, o = {}) {
+  const rx = L * .5, ry = L * (o.ry || .3), wag = Math.sin(t * 8) * L * .06;
+  c.fillStyle = o.tail || shade(col, -.18);
+  c.beginPath(); c.moveTo(-rx * .75, 0); c.lineTo(-rx - L * .28, -ry * .95 + wag);
+  c.quadraticCurveTo(-rx - L * .18, wag * .5, -rx - L * .28, ry * .95 + wag); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(-rx * .35, -ry * .8); c.quadraticCurveTo(-rx * .05, -ry * 1.7, rx * .3, -ry * .85); c.fill();
+  ell(c, 0, 0, rx, ry);
+  if (o.grad) { const g = c.createLinearGradient(0, -ry, 0, ry); g.addColorStop(0, shade(col, -.35)); g.addColorStop(.55, col); g.addColorStop(1, '#e7ecff'); c.fillStyle = g; }
+  else c.fillStyle = col;
+  c.fill();
+  c.save(); ell(c, 0, 0, rx, ry); c.clip();
+  c.fillStyle = 'rgba(255,255,255,.28)'; ell(c, rx * .05, ry * .75, rx * .9, ry * .55); c.fill();
+  if (o.stripes) { c.fillStyle = shade(col, -.35); for (const sx of [-.45, -.1, .22]) { c.fillRect(rx * sx, -ry, L * .07, ry * 2); } }
+  c.restore();
+  if (o.finlets) { c.fillStyle = '#ffd43b'; for (let i = 0; i < 4; i++) { const fx = -rx * .3 - i * L * .07; c.beginPath(); c.moveTo(fx, -ry * .78); c.lineTo(fx - L * .03, -ry * 1.05); c.lineTo(fx - L * .05, -ry * .7); c.fill(); } }
+  c.fillStyle = shade(col, -.12); ell(c, -rx * .05, ry * .2, L * .12, L * .06, .5 + Math.sin(t * 6) * .3); c.fill();
+  eye(c, rx * .5, -ry * .22, L * .085);
+  c.strokeStyle = shade(col, -.45); c.lineWidth = Math.max(1, L * .028); c.lineCap = 'round';
+  c.beginPath(); c.arc(rx * .7, ry * .12, L * .06, .2, 1.4); c.stroke();
+}
+function drawFishShape(c, type, L, t) {
+  const f = FT[type], col = f.color;
+  switch (type) {
+    case 'stripe': basicFish(c, L, col, t, { stripes: true, ry: .32 }); break;
+    case 'tuna': basicFish(c, L, col, t, { grad: true, ry: .24, finlets: true, tail: shade(col, -.3) }); break;
+    case 'gold': {
+      basicFish(c, L, col, t, { tail: '#ff922b' });
+      c.fillStyle = '#fff6bf';
+      for (let i = 0; i < 3; i++) { const a = t * 2 + i * 2.1; star(c, Math.cos(a) * L * .6, Math.sin(a) * L * .45, L * .1 * (0.6 + .4 * Math.sin(t * 5 + i)), t); }
+      break;
+    }
+    case 'puffer': {
+      const r = L * .38 * (1 + Math.sin(t * 3) * .04);
+      c.fillStyle = shade(col, -.15);
+      c.beginPath(); c.moveTo(-r * .8, 0); c.lineTo(-r - L * .2, -L * .14); c.lineTo(-r - L * .2, L * .14); c.closePath(); c.fill();
+      c.fillStyle = '#e8a400';
+      for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; c.beginPath(); c.moveTo(Math.cos(a - .12) * r, Math.sin(a - .12) * r); c.lineTo(Math.cos(a) * r * 1.25, Math.sin(a) * r * 1.25); c.lineTo(Math.cos(a + .12) * r, Math.sin(a + .12) * r); c.fill(); }
+      circ(c, 0, 0, r); c.fillStyle = col; c.fill();
+      c.fillStyle = 'rgba(255,255,255,.35)'; ell(c, 0, r * .45, r * .8, r * .45); c.fill();
+      c.fillStyle = '#ff8fab'; ell(c, r * .35, r * .25, r * .16, r * .1); c.fill();
+      eye(c, r * .4, -r * .2, L * .1);
+      c.strokeStyle = '#a06c00'; c.lineWidth = Math.max(1, L * .03); c.beginPath(); c.arc(r * .8, r * .1, L * .045, 0, TAU); c.stroke();
+      break;
+    }
+    case 'octo': {
+      c.strokeStyle = shade(col, -.1); c.lineCap = 'round'; c.lineWidth = L * .1;
+      for (let i = 0; i < 5; i++) {
+        const bx = (i - 2) * L * .13;
+        c.beginPath(); c.moveTo(bx, L * .05);
+        c.quadraticCurveTo(bx + Math.sin(t * 4 + i) * L * .14, L * .32, bx + Math.sin(t * 4 + i + 1) * L * .1, L * .52); c.stroke();
+      }
+      ell(c, 0, -L * .12, L * .34, L * .34); c.fillStyle = col; c.fill();
+      c.fillStyle = 'rgba(255,255,255,.3)'; circ(c, -L * .14, -L * .26, L * .06); c.fill(); circ(c, -L * .02, -L * .34, L * .04); c.fill();
+      eye(c, -L * .1, -L * .06, L * .08); eye(c, L * .12, -L * .06, L * .08);
+      c.strokeStyle = shade(col, -.45); c.lineWidth = Math.max(1, L * .03); c.beginPath(); c.arc(L * .01, L * .04, L * .06, .3, 2.8); c.stroke();
+      break;
+    }
+    case 'angler': {
+      const rx = L * .42, ry = L * .32, wag = Math.sin(t * 6) * L * .05;
+      c.fillStyle = shade(col, -.25);
+      c.beginPath(); c.moveTo(-rx * .8, 0); c.lineTo(-rx - L * .22, -ry * .8 + wag); c.lineTo(-rx - L * .22, ry * .8 + wag); c.closePath(); c.fill();
+      c.strokeStyle = shade(col, -.3); c.lineWidth = Math.max(1.2, L * .035);
+      c.beginPath(); c.moveTo(rx * .1, -ry * .9); c.quadraticCurveTo(rx * .6, -ry * 2.1, rx * 1.15, -ry * 1.3); c.stroke();
+      const glow = .7 + .3 * Math.sin(t * 4);
+      const g = c.createRadialGradient(rx * 1.15, -ry * 1.3, 0, rx * 1.15, -ry * 1.3, L * .28);
+      g.addColorStop(0, `rgba(255,244,140,${glow})`); g.addColorStop(1, 'rgba(255,244,140,0)');
+      c.fillStyle = g; circ(c, rx * 1.15, -ry * 1.3, L * .28); c.fill();
+      c.fillStyle = '#fff59d'; circ(c, rx * 1.15, -ry * 1.3, L * .06); c.fill();
+      ell(c, 0, 0, rx, ry); c.fillStyle = col; c.fill();
+      c.fillStyle = shade(col, -.35); ell(c, rx * .55, ry * .25, rx * .45, ry * .38); c.fill();
+      c.fillStyle = '#fff';
+      for (let i = 0; i < 5; i++) { const tx = rx * .2 + i * rx * .16; c.beginPath(); c.moveTo(tx, ry * .02); c.lineTo(tx + rx * .07, ry * .22); c.lineTo(tx + rx * .14, ry * .02); c.fill(); }
+      eye(c, rx * .35, -ry * .35, L * .08);
+      break;
+    }
+    case 'chest': {
+      const w = L, h = L * .58, open = .25 + .1 * Math.sin(t * 1.5);
+      const g = c.createRadialGradient(0, -h * .5, 0, 0, -h * .5, L * .7);
+      g.addColorStop(0, 'rgba(255,226,102,.55)'); g.addColorStop(1, 'rgba(255,226,102,0)');
+      c.fillStyle = g; circ(c, 0, -h * .5, L * .7); c.fill();
+      c.fillStyle = '#ffd43b'; ell(c, 0, -h * .62, w * .4, h * .18); c.fill();
+      c.fillStyle = '#fab005'; circ(c, -w * .15, -h * .7, L * .07); c.fill(); circ(c, w * .12, -h * .72, L * .07); c.fill();
+      c.save(); c.translate(-w / 2, -h * .62); c.rotate(-open);
+      c.fillStyle = '#8a5222'; c.beginPath(); c.moveTo(0, 0); c.lineTo(w, 0); c.quadraticCurveTo(w, -h * .55, w / 2, -h * .55); c.quadraticCurveTo(0, -h * .55, 0, 0); c.fill();
+      c.fillStyle = '#e8b33a'; c.fillRect(w * .12, -h * .5, w * .08, h * .5); c.fillRect(w * .8, -h * .5, w * .08, h * .5);
+      c.restore();
+      rr(c, -w / 2, -h * .62, w, h * .62, 3); c.fillStyle = FT.chest.color; c.fill();
+      c.fillStyle = '#7a4a1e'; c.fillRect(-w / 2, -h * .35, w, 2);
+      c.fillStyle = '#e8b33a'; c.fillRect(-w * .38, -h * .62, w * .08, h * .62); c.fillRect(w * .3, -h * .62, w * .08, h * .62);
+      rr(c, -w * .08, -h * .5, w * .16, h * .2, 2); c.fill();
+      c.fillStyle = '#fff'; star(c, w * .3 * Math.sin(t * .9), -h * .95, L * .07 * (.5 + .5 * Math.sin(t * 3)), t);
+      break;
+    }
+    default: basicFish(c, L, col, t);
+  }
+}
+
+/* Boot (Bug zeigt nach rechts, Ursprung = Wasserlinie Mitte) */
+function boatGeo(lvl, s) {
+  const w = BOATS[lvl].w * s, h = (20 + lvl * 2) * s, deck = -h * .5;
+  return { w, h, deck, crateX: lvl ? w * .02 : -w * .22, fisherX: lvl ? w * .26 : w * .12, tip: { x: w * .5 + 10 * s, y: deck - 54 * s } };
+}
+function drawBoat(c, lvl, s, t, items, opts = {}) {
+  const B = BOATS[lvl], g = boatGeo(lvl, s), { w, h, deck } = g;
+  // Mast & Fahne
+  if (lvl >= 2) {
+    const mx = -w * .26, top = deck - (34 + 10 + lvl * 3) * s - 34 * s;
+    c.strokeStyle = '#5c3d1e'; c.lineWidth = 3 * s; c.beginPath(); c.moveTo(mx, deck); c.lineTo(mx, top); c.stroke();
+    const flap = Math.sin(t * 6) * 3 * s;
+    c.fillStyle = lvl >= 3 ? '#ffd43b' : '#ff6b4a';
+    c.beginPath(); c.moveTo(mx, top); c.quadraticCurveTo(mx - 12 * s, top + 4 * s + flap, mx - 24 * s, top + 7 * s + flap); c.lineTo(mx, top + 14 * s); c.closePath(); c.fill();
+    if (lvl >= 4) {
+      c.strokeStyle = 'rgba(92,61,30,.7)'; c.lineWidth = 1 * s;
+      c.beginPath(); c.moveTo(mx, top + 2 * s); c.quadraticCurveTo(w * .1, top + 30 * s, w * .5, deck - 6 * s); c.stroke();
+      ['#ff6b6b', '#ffd43b', '#69db7c', '#4dabf7', '#ff6b6b'].forEach((col, i) => {
+        const k = (i + 1) / 6, px = mx + (w * .5 - mx) * k, py = top + 2 * s + ((deck - 6 * s) - (top + 2 * s)) * k + Math.sin(k * Math.PI) * 10 * s;
+        c.fillStyle = col; circ(c, px, py, 2.6 * s); c.fill();
+      });
+    }
+  }
+  // Kabine
+  if (lvl >= 1) {
+    const cx0 = -w * .42, cw = w * .32, ch = (28 + lvl * 3) * s;
+    if (lvl >= 4) { c.fillStyle = '#343a40'; c.fillRect(cx0 + cw * .62, deck - ch - 16 * s, 9 * s, 18 * s); c.fillStyle = '#ff6b4a'; c.fillRect(cx0 + cw * .62, deck - ch - 16 * s, 9 * s, 4 * s); }
+    rr(c, cx0, deck - ch, cw, ch + 2, 4 * s); c.fillStyle = '#f8f9fa'; c.fill();
+    c.fillStyle = shade(B.hull, -.15); rr(c, cx0 - 3 * s, deck - ch - 5 * s, cw + 6 * s, 7 * s, 3 * s); c.fill();
+    c.fillStyle = '#a5d8ff'; rr(c, cx0 + cw * .52, deck - ch + 7 * s, cw * .34, ch * .38, 3 * s); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.7)'; c.fillRect(cx0 + cw * .56, deck - ch + 9 * s, 3 * s, ch * .25);
+    if (lvl >= 3) {
+      const lx = cx0 + cw * .25, ly = deck - ch * .45, lr = 7 * s;
+      c.lineWidth = 4 * s;
+      for (let i = 0; i < 4; i++) { c.strokeStyle = i % 2 ? '#fff' : '#fa5252'; c.beginPath(); c.arc(lx, ly, lr, i * Math.PI / 2, (i + 1) * Math.PI / 2); c.stroke(); }
+    }
+  }
+  // Kiste
+  const n = items ? items.length : 0, kx = g.crateX, kw = 26 * s, kh = 13 * s;
+  for (let i = 0; i < Math.min(n, 5); i++) {
+    const it = items[items.length - 1 - i];
+    c.save(); c.translate(kx - kw * .32 + i * kw * .16, deck - kh - 2 * s); c.rotate(-1.2 + i * .5);
+    drawFishShape(c, it === 'chest' ? 'gold' : it, 14 * s, t + i); c.restore();
+  }
+  rr(c, kx - kw / 2, deck - kh, kw, kh, 2 * s); c.fillStyle = '#c98b4f'; c.fill();
+  c.strokeStyle = '#8a5a2b'; c.lineWidth = 1.5 * s; c.beginPath(); c.moveTo(kx - kw / 2, deck - kh / 2); c.lineTo(kx + kw / 2, deck - kh / 2); c.stroke();
+  if (opts.full) { c.strokeStyle = '#ff6b4a'; c.lineWidth = 2.5 * s; rr(c, kx - kw / 2 - 2 * s, deck - kh - 2 * s, kw + 4 * s, kh + 4 * s, 4 * s); c.stroke(); }
+  // Fischer
+  const fx = g.fisherX;
+  c.strokeStyle = '#5c3d1e'; c.lineWidth = 2.5 * s; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(fx + 3 * s, deck - 12 * s); c.quadraticCurveTo(g.tip.x - 10 * s, g.tip.y + 4 * s, g.tip.x, g.tip.y); c.stroke();
+  c.fillStyle = '#495057'; circ(c, fx + 7 * s, deck - 13 * s, 3 * s); c.fill();
+  rr(c, fx - 7 * s, deck - 22 * s, 14 * s, 22 * s, 5 * s); c.fillStyle = '#ffd43b'; c.fill();
+  c.strokeStyle = '#e0a800'; c.lineWidth = 1.5 * s; c.beginPath(); c.moveTo(fx - 4 * s, deck - 14 * s); c.lineTo(fx + 6 * s, deck - 13 * s); c.stroke();
+  c.fillStyle = '#ffd8b5'; circ(c, fx, deck - 28 * s, 7 * s); c.fill();
+  c.fillStyle = '#173451'; circ(c, fx + 1.5 * s, deck - 29 * s, 1.2 * s); c.fill(); circ(c, fx + 4.5 * s, deck - 29 * s, 1.2 * s); c.fill();
+  c.strokeStyle = '#173451'; c.lineWidth = 1 * s; c.beginPath(); c.arc(fx + 3 * s, deck - 27 * s, 2 * s, .3, 2.6); c.stroke();
+  c.fillStyle = '#ff8fab'; circ(c, fx + 5.5 * s, deck - 26 * s, 1.4 * s); c.fill();
+  c.fillStyle = '#ffd43b'; ell(c, fx, deck - 33 * s, 10.5 * s, 3 * s); c.fill();
+  c.beginPath(); c.arc(fx, deck - 33 * s, 7 * s, Math.PI, 0); c.fill();
+  // Rumpf
+  c.beginPath();
+  c.moveTo(-w / 2, deck); c.lineTo(w / 2 + 6 * s, deck - h * .2);
+  c.quadraticCurveTo(w * .42, h * .5, w * .18, h * .5); c.lineTo(-w * .36, h * .5);
+  c.quadraticCurveTo(-w / 2, h * .35, -w / 2, deck); c.closePath();
+  c.fillStyle = B.hull; c.fill();
+  c.save(); c.clip();
+  c.fillStyle = B.trim; c.fillRect(-w, deck - 2 * s, w * 2, 5 * s);
+  c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(-w, h * .15, w * 2, h);
+  if (lvl === 0) { c.strokeStyle = 'rgba(0,0,0,.15)'; c.lineWidth = 1.2 * s; for (const yy of [.05, .3]) { c.beginPath(); c.moveTo(-w, deck + h * yy + 6 * s); c.lineTo(w, deck + h * yy + 4 * s); c.stroke(); } }
+  c.restore();
+  if (lvl >= 2) { c.fillStyle = '#e7f5ff'; for (let i = 0; i < Math.min(lvl, 4); i++) { circ(c, -w * .3 + i * w * .17, deck + h * .38, 2.6 * s); c.fill(); } }
+}
+
+/* ---------- Welt ---------- */
+let W = 0, H = 0, DPR = 1, S = 1, T = 0;
+const G = { spawnT: [0, 0, 0, 0], chestT: 3 };
+let fishes = [], parts = [], clouds = [];
+const boat = { x: 0, tx: 0, face: 1, lean: 0, moving: false };
+const hook = { st: 'idle', x: 0, y: 0, fish: null, carry: null, fail: 0 };
+const sell = { active: false, timer: 0, earned: 0 };
+const hint = { text: '', t: 0 };
+let dispCoins = 0;
+
+function resize() {
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = r.width; H = r.height;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  S = clamp(Math.min(W / 1000, H / 700) * 1.15, .72, 1.25);
+  G.seaY = Math.round(Math.max(160, H * .28));
+  G.bottomY = H - Math.max(22, H * .04);
+  G.z0 = G.seaY + 14;
+  G.zoneH = (G.bottomY - G.z0) / 4;
+  G.harborW = Math.round(Math.min(150, Math.max(96, W * .13)));
+  G.weeds = [];
+  for (let x = rand(0, 40); x < W; x += rand(50, 110)) G.weeds.push({ x, h: rand(28, 80) * S, col: ['#2f9e44', '#37b24d', '#1f7a3a', '#5c940d'][Math.random() * 4 | 0], ph: rand(0, 6) });
+  G.rocks = [];
+  for (let i = 0; i < Math.max(3, W / 260); i++) G.rocks.push({ x: rand(0, W), r: rand(10, 24) * S, star: Math.random() < .35 });
+  if (!clouds.length) for (let i = 0; i < 5; i++) clouds.push({ x: rand(0, 1), y: rand(.2, .65), s: rand(.7, 1.3), sp: rand(6, 14) });
+  boat.x = clamp(boat.x || G.harborW + 140, minBoatX(), maxBoatX()); boat.tx = clamp(boat.tx || boat.x, minBoatX(), maxBoatX());
+  for (const f of fishes) f.x = clamp(f.x, -80, W + 80);
+}
+const boatW = () => BOATS[save.lv.boat].w * S;
+const minBoatX = () => G.harborW + boatW() * .5 + 6;
+const maxBoatX = () => Math.max(minBoatX(), W - boatW() * .5 - 14 * S);
+const waveY = x => G.seaY + Math.sin(x * .02 + T * 1.5) * 3 + Math.sin(x * .045 - T * 2.1) * 2;
+function pose() {
+  return { x: boat.x, y: waveY(boat.x) + Math.sin(T * 2.2) * 1.5, rot: Math.sin(T * 1.6) * .03 + boat.lean, face: boat.face };
+}
+function toWorld(lx, ly, p = pose()) {
+  const px = lx * p.face, c = Math.cos(p.rot), s = Math.sin(p.rot);
+  return { x: p.x + px * c - ly * s, y: p.y + px * s + ly * c };
+}
+const rodTip = () => { const g = boatGeo(save.lv.boat, S); return toWorld(g.tip.x, g.tip.y); };
+const crateSpot = () => { const g = boatGeo(save.lv.boat, S); return toWorld(g.crateX, g.deck - 8 * S); };
+const market = () => ({ x: G.harborW * .42, y: G.seaY - 44 * S });
+const reachable = f => f.zone <= save.lv.line;
+const reachY = () => G.z0 + (save.lv.line + 1) * G.zoneH - 6;
+
+function fishY(f) {
+  if (f.type === 'chest') return G.bottomY - 4 * S;
+  const base = G.z0 + (f.zone + f.fy) * G.zoneH;
+  return base + (f.type === 'octo' ? Math.sin(T * 1.6 + f.ph) * 10 * S : Math.sin(T * 1.3 + f.ph) * 3 * S);
+}
+function pickType(z) {
+  const ks = ORDER.filter(k => FT[k].zone === z && FT[k].w > 0);
+  let r = Math.random() * ks.reduce((a, k) => a + FT[k].w, 0);
+  for (const k of ks) { r -= FT[k].w; if (r <= 0) return k; }
+  return ks[0];
+}
+function spawnFish(z, onScreen) {
+  let type = pickType(z);
+  if (z < 3 && save.lv.bait >= 1 && Math.random() < .03 + .04 * save.lv.bait) type = 'gold';
+  const dir = Math.random() < .5 ? 1 : -1;
+  const f = { type, zone: z, fy: rand(.25, .75), dir, sp: FT[type].speed * rand(.8, 1.2), ph: rand(0, TAU), targeted: false, x: 0, y: 0 };
+  f.x = onScreen ? rand(G.harborW * .6, W - 40) : (dir > 0 ? -60 : W + 60);
+  f.y = fishY(f);
+  return f;
+}
+function makeChest() {
+  const f = { type: 'chest', zone: 3, fy: 1, dir: 1, sp: 0, ph: rand(0, 6), targeted: false, x: rand(G.harborW + 60, W - 60), y: 0 };
+  f.y = fishY(f); return f;
+}
+const wantFish = z => (z === 0 ? 3 : 2) + save.lv.bait;
+function populate() {
+  fishes = [];
+  for (let z = 0; z < 4; z++) for (let i = 0; i < wantFish(z); i++) fishes.push(spawnFish(z, true));
+  fishes.push(makeChest());
+}
+
+/* ---------- Hinweise ---------- */
+function showHint(text, speak = true, dur = 3.2) {
+  hint.text = text; hint.t = dur;
+  if (speak) say(text);
+}
+
+/* ---------- Eingabe ---------- */
+function onTap(x, y) {
+  if (x < G.harborW + 10 && y < G.seaY + 16) { goSell(); return; }
+  if (y < G.seaY - 30) { if (hook.st === 'idle') { sell.active = false; boat.tx = clamp(x, minBoatX(), maxBoatX()); } return; }
+  if (hook.st !== 'idle') return;
+  let best = null, bd = 74 * S;
+  for (const f of fishes) {
+    const d = Math.hypot(f.x - x, (f.y - (f.type === 'chest' ? 12 * S : 0)) - y);
+    if (d < bd) { bd = d; best = f; }
+  }
+  if (!best) { sell.active = false; boat.tx = clamp(x, minBoatX(), maxBoatX()); return; }
+  tryCatch(best);
+}
+function tryCatch(f) {
+  if (crate.length >= cap()) { sfx.nope(); showHint('Die Kiste ist voll! Fahr zum Hafen.'); return; }
+  sell.active = false;
+  hook.st = 'aim'; hook.fish = f; f.targeted = true;
+}
+/* Tastatur: nächsten Fisch unter dem Boot angeln, erreichbare zuerst */
+function castNearest() {
+  if (hook.st !== 'idle') return;
+  let best = null, bd = Infinity;
+  for (const f of fishes) {
+    if (f.carried || f.x < 10 || f.x > W - 10) continue;
+    const d = Math.abs(f.x - boat.x) + (reachable(f) ? 0 : 100000);
+    if (d < bd) { bd = d; best = f; }
+  }
+  if (best) tryCatch(best);
+}
+const keys = { left: false, right: false };
+function goSell() {
+  if (hook.st === 'aim') { if (hook.fish) hook.fish.targeted = false; hook.fish = null; hook.st = 'idle'; }
+  boat.tx = minBoatX();
+  if (!crate.length) { showHint('Fang erst ein paar Fische!'); return; }
+  sell.active = true; sell.timer = .2; sell.earned = 0;
+}
+function canvasPos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+cv.addEventListener('pointerdown', e => { ensureAudio(); const p = canvasPos(e); onTap(p.x, p.y); });
+
+/* ---------- Partikel ---------- */
+function fly(type, a, b, dur, onLand) { parts.push({ k: 'fly', type, a, b, t: 0, dur, onLand }); }
+function floatText(x, y, text, color = '#fff') { parts.push({ k: 'txt', x, y, text, color, life: 1.4, max: 1.4 }); }
+function sparks(x, y, n, cols) { for (let i = 0; i < n; i++) { const a = rand(0, TAU), v = rand(60, 200); parts.push({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: rand(.5, .9), col: cols[i % cols.length] }); } }
+function hudCoinTarget() {
+  const r = $('#coins').getBoundingClientRect(), c = cv.getBoundingClientRect();
+  return { x: r.left - c.left + 24, y: r.top - c.top + r.height / 2 };
+}
+function addCoins(v, x, y) {
+  save.coins += v; persist();
+  floatText(x, y - 10, '+' + v, '#ffe066');
+  const tgt = hudCoinTarget(), n = Math.min(v, 6);
+  for (let i = 0; i < n; i++) parts.push({ k: 'coin', a: { x: x + rand(-10, 10), y }, b: tgt, t: -i * .07, dur: .7 });
+  sfx.coin(); updateHud();
+}
+
+/* ---------- Update ---------- */
+function update(dt) {
+  T += dt;
+  for (const cl of clouds) { cl.x += cl.sp * dt / Math.max(W, 1); if (cl.x > 1.2) cl.x = -.2; }
+
+  // Boot
+  const kd = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+  if (kd && (hook.st === 'idle' || hook.st === 'aim')) {
+    if (hook.st === 'aim') { if (hook.fish) hook.fish.targeted = false; hook.fish = null; hook.st = 'idle'; }
+    sell.active = false; boat.tx = kd > 0 ? maxBoatX() : minBoatX();
+  }
+  const speed = UP.motor.vals[save.lv.motor] * Math.max(1, W / 1100);
+  const dx = boat.tx - boat.x, step = speed * dt;
+  boat.moving = Math.abs(dx) > .5;
+  if (Math.abs(dx) <= step) boat.x = boat.tx; else boat.x += Math.sign(dx) * step;
+  if (Math.abs(dx) > 3 && hook.st !== 'down' && hook.st !== 'up') boat.face = Math.sign(dx);
+  boat.lean += ((boat.moving ? -boat.face * .045 : 0) - boat.lean) * Math.min(1, dt * 4);
+  if (boat.moving && Math.random() < dt * (14 + save.lv.motor * 8)) {
+    const p = toWorld(-boatW() * .5, 2 * S);
+    parts.push({ k: 'foam', x: p.x, y: p.y + rand(-2, 4), r: rand(2, 5) * S * (1 + save.lv.motor * .15), life: .8, max: .8 });
+  }
+  if (save.lv.boat >= 4 && Math.random() < dt * 3) {
+    const g = boatGeo(4, S), p = toWorld(-w42(g) + g.w * .32 * .62 + 4 * S, g.deck - (28 + 12) * S - 16 * S);
+    parts.push({ k: 'smoke', x: p.x, y: p.y, r: 5 * S, life: 2, max: 2 });
+  }
+
+  // Fische
+  for (const f of fishes) {
+    if (f.carried) continue;
+    const sp = f.sp * (f.targeted ? .25 : 1) * Math.max(1, W / 1100);
+    f.x += f.dir * sp * dt;
+    if (f.targeted && ((f.x < 30 && f.dir < 0) || (f.x > W - 30 && f.dir > 0))) f.dir *= -1;
+    f.y = fishY(f);
+  }
+  fishes = fishes.filter(f => f.carried || f.targeted || f.type === 'chest' || (f.dir > 0 ? f.x < W + 90 : f.x > -90));
+  for (let z = 0; z < 4; z++) {
+    const count = fishes.filter(f => f.zone === z && f.type !== 'chest' && !f.carried).length;
+    if (count < wantFish(z)) { G.spawnT[z] -= dt; if (G.spawnT[z] <= 0) { fishes.push(spawnFish(z, false)); G.spawnT[z] = rand(.4, 1.8); } }
+  }
+  if (!fishes.some(f => f.type === 'chest')) { G.chestT -= dt; if (G.chestT <= 0) { fishes.push(makeChest()); G.chestT = 14; } }
+
+  // Haken
+  const tip = rodTip(), lineSp = (320 + 60 * save.lv.line) * Math.max(1, H / 800);
+  switch (hook.st) {
+    case 'idle': hook.x = tip.x; hook.y = tip.y; break;
+    case 'aim': {
+      const f = hook.fish;
+      boat.tx = clamp(f.x, minBoatX(), maxBoatX());
+      hook.x = tip.x; hook.y = tip.y;
+      if (Math.abs(boat.x - f.x) < 60 * S || (boat.x === boat.tx && !boat.moving)) { hook.st = 'down'; hook.y = G.seaY; sfx.plop(); splash(tip.x, G.seaY); }
+      break;
+    }
+    case 'down': {
+      const f = hook.fish, ok = reachable(f);
+      const tx = f.x, ty = ok ? f.y - (f.type === 'chest' ? 10 * S : 0) : Math.min(f.y, reachY());
+      const ddx = tx - hook.x, ddy = ty - hook.y, d = Math.hypot(ddx, ddy);
+      if (d < 10 * S || d < lineSp * dt) {
+        if (ok) {
+          hook.carry = f; f.carried = true; f.targeted = false; hook.fish = null; hook.st = 'up';
+          sfx.catch(); sparks(hook.x, hook.y, 10, ['#fff', '#a5d8ff', '#ffe066']);
+        } else {
+          hook.st = 'fail'; hook.fail = .7; sfx.fail();
+          if (save.lv.line < UP.line.vals.length - 1) showHint('Zu tief! In der Werft gibt es eine längere Angel.');
+        }
+      } else { hook.x += ddx / d * lineSp * dt; hook.y += ddy / d * lineSp * dt; }
+      break;
+    }
+    case 'fail': {
+      hook.fail -= dt; hook.x += Math.sin(T * 50) * 1.5;
+      if (hook.fail <= 0) { if (hook.fish) hook.fish.targeted = false; hook.fish = null; hook.st = 'up'; }
+      break;
+    }
+    case 'up': {
+      const ddx = tip.x - hook.x, ddy = tip.y - hook.y, d = Math.hypot(ddx, ddy), sp = lineSp * 1.15;
+      if (d < sp * dt || d < 6) {
+        hook.x = tip.x; hook.y = tip.y; hook.st = 'idle';
+        if (hook.carry) landCatch(hook.carry);
+        hook.carry = null;
+      } else {
+        const prevY = hook.y;
+        hook.x += ddx / d * sp * dt; hook.y += ddy / d * sp * dt;
+        if (hook.carry && prevY > G.seaY && hook.y <= G.seaY) { sfx.splash(); splash(hook.x, G.seaY); }
+      }
+      if (hook.carry) { hook.carry.x = hook.x; hook.carry.y = hook.y; }
+      break;
+    }
+  }
+
+  // Verkaufen
+  if (sell.active && hook.st === 'idle') {
+    boat.tx = minBoatX();
+    if (Math.abs(boat.x - boat.tx) < 2) {
+      sell.timer -= dt;
+      if (sell.timer <= 0) {
+        if (crate.length) {
+          const type = crate.shift(); renderCrate(); persist();
+          sell.earned += FT[type].value; save.sold++;
+          const m = market();
+          fly(type, crateSpot(), { x: m.x, y: m.y + 10 * S }, .45, p => addCoins(FT[type].value, p.x, p.y - 20 * S));
+          sell.timer = .38;
+        } else {
+          sell.active = false;
+          const e = sell.earned;
+          setTimeout(() => say(e === 1 ? 'Du hast eine Münze verdient!' : `Du hast ${e} Münzen verdient!`), 600);
+        }
+      }
+    }
+  }
+
+  // Partikel
+  for (const p of parts) {
+    if (p.k === 'fly' || p.k === 'coin') {
+      p.t += dt;
+      if (p.t >= p.dur && !p.done) { p.done = true; if (p.onLand) p.onLand(p.b); if (p.k === 'coin') bumpCoins(); }
+    } else if (p.k === 'spark') { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt; }
+    else if (p.k === 'txt') { p.y -= 40 * dt; p.life -= dt; }
+    else if (p.k === 'bub') { p.y -= p.vy * dt; p.x += Math.sin(T * 3 + p.y * .05) * .3; p.life -= dt; if (p.y < G.seaY + 2) p.life = 0; }
+    else if (p.k === 'foam') { p.life -= dt; p.r += dt * 6; }
+    else if (p.k === 'smoke') { p.y -= 18 * dt; p.x -= 10 * dt * boat.face; p.r += dt * 6; p.life -= dt; }
+    else if (p.k === 'drop') { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 500 * dt; p.life -= dt; }
+  }
+  parts = parts.filter(p => (p.k === 'fly' || p.k === 'coin') ? !p.done : p.life > 0);
+  if (Math.random() < dt * 3) parts.push({ k: 'bub', x: rand(0, W), y: G.bottomY - 10, vy: rand(20, 50), r: rand(1.5, 4) * S, life: 12 });
+
+  if (hint.t > 0) hint.t -= dt;
+
+  // Münzzähler
+  if (dispCoins < save.coins) dispCoins = Math.min(save.coins, dispCoins + Math.max(1, (save.coins - dispCoins) * dt * 6));
+  else dispCoins = save.coins;
+  const shown = Math.floor(dispCoins);
+  if (coinNum.textContent !== String(shown)) coinNum.textContent = shown;
+}
+function w42(g) { return g.w * .42; }
+function splash(x, y) {
+  for (let i = 0; i < 8; i++) parts.push({ k: 'drop', x, y, vx: rand(-70, 70), vy: rand(-180, -80), life: .6, r: rand(1.5, 3) * S });
+}
+function landCatch(f) {
+  fishes = fishes.filter(o => o !== f);
+  const type = f.type, isNew = !save.album[type];
+  save.album[type] = true; save.caught++;
+  fly(type, rodTip(), crateSpot(), .4, () => {
+    crate.push(type); renderCrate(); persist();
+    sparks(crateSpot().x, crateSpot().y, 6, ['#ffe066', '#fff']);
+  });
+  const ft = FT[type];
+  floatText(rodTip().x, rodTip().y - 14 * S, ft.name, '#fff');
+  if (isNew && save.caught > 1) say(`Neu! ${ft.ein}!`); else say(ft.ein + '!');
+  if (crate.length + 1 >= cap()) setTimeout(() => showHint('Die Kiste ist voll! Fahr zum Hafen.', true), 900);
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const c = ctx;
+  c.clearRect(0, 0, W, H);
+  // Himmel
+  let g = c.createLinearGradient(0, 0, 0, G.seaY);
+  g.addColorStop(0, '#5cc3f5'); g.addColorStop(1, '#d6f3ff');
+  c.fillStyle = g; c.fillRect(0, 0, W, G.seaY + 4);
+  // Sonne
+  const sx = W * .78, sy = G.seaY * .5, sr = 30 * S;
+  c.save(); c.translate(sx, sy); c.rotate(T * .15); c.fillStyle = 'rgba(255,212,59,.45)';
+  for (let i = 0; i < 12; i++) { c.rotate(TAU / 12); c.beginPath(); c.moveTo(sr * 1.15, -5 * S); c.lineTo(sr * 1.7, 0); c.lineTo(sr * 1.15, 5 * S); c.fill(); }
+  c.restore();
+  c.fillStyle = '#ffd43b'; circ(c, sx, sy, sr); c.fill();
+  c.fillStyle = '#e8a400'; circ(c, sx - 9 * S, sy - 4 * S, 2.6 * S); c.fill(); circ(c, sx + 9 * S, sy - 4 * S, 2.6 * S); c.fill();
+  c.strokeStyle = '#e8a400'; c.lineWidth = 2.4 * S; c.beginPath(); c.arc(sx, sy + 3 * S, 10 * S, .3, 2.84); c.stroke();
+  // Wolken
+  c.fillStyle = 'rgba(255,255,255,.92)';
+  for (const cl of clouds) {
+    const x = cl.x * W, y = cl.y * G.seaY * .75 + 20, k = cl.s * S;
+    circ(c, x, y, 18 * k); c.fill(); circ(c, x + 20 * k, y - 8 * k, 22 * k); c.fill(); circ(c, x + 42 * k, y, 17 * k); c.fill();
+    rr(c, x - 10 * k, y, 66 * k, 16 * k, 8 * k); c.fill();
+  }
+  // Leuchtturm
+  if (W > 520) {
+    const lx = W - 46 * S, ly = G.seaY + 2;
+    c.fillStyle = '#868e96'; ell(c, lx, ly, 34 * S, 12 * S); c.fill();
+    const th = 74 * S;
+    c.save(); c.beginPath(); c.moveTo(lx - 12 * S, ly - 4 * S); c.lineTo(lx - 8 * S, ly - th); c.lineTo(lx + 8 * S, ly - th); c.lineTo(lx + 12 * S, ly - 4 * S); c.closePath();
+    c.fillStyle = '#fff'; c.fill(); c.clip(); c.fillStyle = '#fa5252';
+    for (let i = 0; i < 4; i++) c.fillRect(lx - 14 * S, ly - 4 * S - th * (i * .25 + .06), 28 * S, th * .12);
+    c.restore();
+    const beam = .5 + .5 * Math.sin(T * 2);
+    c.fillStyle = `rgba(255,236,153,${.25 * beam})`; c.beginPath(); c.moveTo(lx, ly - th - 8 * S); c.lineTo(lx - 90 * S, ly - th - 26 * S); c.lineTo(lx - 90 * S, ly - th + 10 * S); c.fill();
+    c.fillStyle = '#ffe066'; c.fillRect(lx - 7 * S, ly - th - 14 * S, 14 * S, 12 * S);
+    c.fillStyle = '#c92a2a'; c.beginPath(); c.moveTo(lx - 10 * S, ly - th - 14 * S); c.lineTo(lx, ly - th - 26 * S); c.lineTo(lx + 10 * S, ly - th - 14 * S); c.fill();
+  }
+  // Meer
+  g = c.createLinearGradient(0, G.seaY, 0, G.bottomY);
+  g.addColorStop(0, '#2fb0e0'); g.addColorStop(.3, '#1b86bc'); g.addColorStop(.6, '#145d92'); g.addColorStop(1, '#0b3260');
+  c.fillStyle = g; c.beginPath(); c.moveTo(0, H);
+  for (let x = 0; x <= W + 10; x += 10) c.lineTo(x, waveY(x));
+  c.lineTo(W, H); c.closePath(); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.05)';
+  for (let i = 0; i < 5; i++) {
+    const x = (i + .3) * W / 5 + Math.sin(T * .3 + i) * 30;
+    c.beginPath(); c.moveTo(x - 18, G.seaY); c.lineTo(x + 18, G.seaY); c.lineTo(x + 110, G.bottomY); c.lineTo(x + 20, G.bottomY); c.fill();
+  }
+  // Meeresboden
+  for (const wd of G.weeds) {
+    c.strokeStyle = wd.col; c.lineWidth = 7 * S; c.lineCap = 'round';
+    const sw = Math.sin(T * 1.2 + wd.ph) * 10 * S;
+    c.beginPath(); c.moveTo(wd.x, G.bottomY + 6); c.quadraticCurveTo(wd.x + sw, G.bottomY - wd.h * .5, wd.x + sw * 1.4, G.bottomY - wd.h); c.stroke();
+  }
+  c.fillStyle = '#d9b874'; c.beginPath(); c.moveTo(0, H);
+  for (let x = 0; x <= W + 20; x += 20) c.lineTo(x, G.bottomY + Math.sin(x * .013) * 5 * S);
+  c.lineTo(W, H); c.closePath(); c.fill();
+  for (const r of G.rocks) {
+    if (r.star) { c.fillStyle = '#ff922b'; c.save(); c.translate(r.x, G.bottomY + 4 * S); c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r.r * .22 : r.r * .55; c.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } c.fill(); c.restore(); }
+    else { c.fillStyle = '#7d8a96'; ell(c, r.x, G.bottomY + 2, r.r, r.r * .55); c.fill(); }
+  }
+  // Fische
+  for (const f of fishes) {
+    if (f.carried) continue;
+    c.save(); c.translate(f.x, f.y);
+    if (f.type !== 'octo' && f.type !== 'chest') c.scale(f.dir, 1);
+    drawFishShape(c, f.type, FT[f.type].len * S, T + f.ph);
+    c.restore();
+  }
+  // Gesperrte Tiefen
+  for (let z = save.lv.line + 1; z < 4; z++) {
+    const y0 = G.z0 + z * G.zoneH;
+    c.fillStyle = 'rgba(4,18,40,.38)'; c.fillRect(0, y0, W, z === 3 ? H - y0 : G.zoneH);
+    if (z === save.lv.line + 1) {
+      c.strokeStyle = 'rgba(255,255,255,.35)'; c.setLineDash([10, 8]); c.lineWidth = 2;
+      c.beginPath(); c.moveTo(0, y0); c.lineTo(W, y0); c.stroke(); c.setLineDash([]);
+    }
+    drawLock(c, W - 30 * S, y0 + G.zoneH / 2, S);
+  }
+  // Blasen
+  for (const p of parts) if (p.k === 'bub') { c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 1.2; circ(c, p.x, p.y, p.r); c.stroke(); }
+
+  drawHarbor(c);
+
+  // Boot
+  const P = pose();
+  for (const p of parts) if (p.k === 'foam') { c.fillStyle = `rgba(255,255,255,${.7 * p.life / p.max})`; circ(c, p.x, p.y, p.r); c.fill(); }
+  c.save(); c.translate(P.x, P.y); c.rotate(P.rot); c.scale(P.face, 1);
+  drawBoat(c, save.lv.boat, S, T, crate, { full: crate.length >= cap() });
+  c.restore();
+  for (const p of parts) if (p.k === 'smoke') { c.fillStyle = `rgba(120,130,140,${.4 * p.life / p.max})`; circ(c, p.x, p.y, p.r); c.fill(); }
+  // Vordere Welle
+  c.fillStyle = 'rgba(47,176,224,.55)'; c.beginPath(); c.moveTo(0, G.seaY + 14);
+  for (let x = 0; x <= W + 10; x += 10) c.lineTo(x, waveY(x) + 1.5);
+  c.lineTo(W, G.seaY + 14); c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2; c.beginPath();
+  for (let x = 0; x <= W + 10; x += 10) c.lineTo(x, waveY(x) + 1.5);
+  c.stroke();
+
+  // Angelschnur & Haken
+  const tip = rodTip();
+  if (hook.st !== 'idle' && hook.st !== 'aim') {
+    c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(tip.x, tip.y); c.quadraticCurveTo((tip.x + hook.x) / 2 + 6, (tip.y + hook.y) / 2 + 10, hook.x, hook.y); c.stroke();
+    c.fillStyle = '#fa5252'; circ(c, hook.x, hook.y - 8 * S, 3.2 * S); c.fill();
+    c.strokeStyle = '#ced4da'; c.lineWidth = 2.4 * S; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(hook.x, hook.y - 5 * S); c.lineTo(hook.x, hook.y + 4 * S); c.arc(hook.x - 4 * S, hook.y + 4 * S, 4 * S, 0, Math.PI * .9); c.stroke();
+    if (hook.carry) {
+      const f = hook.carry, L = FT[f.type].len * S;
+      c.save(); c.translate(hook.x, hook.y);
+      if (f.type === 'chest' || f.type === 'octo') { c.rotate(Math.sin(T * 8) * .15); c.translate(0, L * .45); }
+      else { c.rotate(-Math.PI / 2 + Math.sin(T * 16) * .3); c.translate(-L * .48, 0); }
+      drawFishShape(c, f.type, L, T * 2);
+      c.restore();
+    }
+    if (hook.st === 'fail') {
+      c.fillStyle = '#ff6b4a'; c.font = `900 ${26 * S}px Nunito, system-ui, sans-serif`; c.textAlign = 'center';
+      c.fillText('✕', hook.x, hook.y + 30 * S);
+    }
+  }
+
+  // Tipps für Anfänger
+  if (hook.st === 'idle' && !sell.active) {
+    if (crate.length >= cap()) drawArrowToHarbor(c, P);
+    else if (save.caught === 0) {
+      let best = null, bd = Infinity;
+      for (const f of fishes) if (f.zone === 0 && f.x > 40 && f.x < W - 40) { const d = Math.abs(f.x - boat.x); if (d < bd) { bd = d; best = f; } }
+      if (best) drawPulse(c, best.x, best.y, 'Tippe auf den Fisch!');
+    } else if (save.sold === 0 && crate.length > 0) {
+      const m = market(); drawPulse(c, m.x, m.y, 'Verkaufen!');
+    }
+  }
+
+  // Partikel
+  for (const p of parts) {
+    if (p.k === 'fly') {
+      const k = clamp(p.t / p.dur, 0, 1), x = p.a.x + (p.b.x - p.a.x) * k, y = p.a.y + (p.b.y - p.a.y) * k - Math.sin(k * Math.PI) * 60 * S;
+      c.save(); c.translate(x, y); c.rotate(k * TAU * .8); drawFishShape(c, p.type, FT[p.type].len * S * (1 - k * .35), T); c.restore();
+    } else if (p.k === 'coin') {
+      if (p.t < 0) continue;
+      const k = clamp(p.t / p.dur, 0, 1), e = k * k, x = p.a.x + (p.b.x - p.a.x) * e, y = p.a.y + (p.b.y - p.a.y) * e - Math.sin(k * Math.PI) * 50 * S;
+      drawCoin(c, x, y, 9 * S, T * 10 + p.a.x);
+    } else if (p.k === 'spark') { c.fillStyle = p.col; c.globalAlpha = clamp(p.life * 1.5, 0, 1); star(c, p.x, p.y, 5 * S, T * 4); c.globalAlpha = 1; }
+    else if (p.k === 'drop') { c.fillStyle = 'rgba(220,245,255,.9)'; circ(c, p.x, p.y, p.r); c.fill(); }
+    else if (p.k === 'txt') {
+      c.globalAlpha = clamp(p.life / p.max * 2, 0, 1);
+      c.font = `${22 * S}px 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif`; c.textAlign = 'center';
+      c.lineWidth = 5; c.strokeStyle = '#173451'; c.strokeText(p.text, p.x, p.y); c.fillStyle = p.color; c.fillText(p.text, p.x, p.y);
+      c.globalAlpha = 1;
+    }
+  }
+
+  if (hint.t > 0 && hint.text) drawBubble(c, hint.text, P);
+}
+function drawCoin(c, x, y, r, spin) {
+  const sx = Math.abs(Math.cos(spin)) * .7 + .3;
+  c.fillStyle = '#b77b00'; ell(c, x, y, r * sx, r); c.fill();
+  c.fillStyle = '#ffd23f'; ell(c, x, y, r * sx * .78, r * .78); c.fill();
+}
+function drawLock(c, x, y, s) {
+  c.strokeStyle = '#ffe066'; c.lineWidth = 4 * s; c.beginPath(); c.arc(x, y - 6 * s, 8 * s, Math.PI, 0); c.stroke();
+  c.fillStyle = '#ffd43b'; rr(c, x - 12 * s, y - 6 * s, 24 * s, 19 * s, 4 * s); c.fill();
+  c.fillStyle = '#8a6100'; circ(c, x, y + 2 * s, 3 * s); c.fill(); c.fillRect(x - 1.2 * s, y + 2 * s, 2.4 * s, 6 * s);
+}
+function drawHarbor(c) {
+  const hw = G.harborW, deckY = G.seaY - 10 * S;
+  c.fillStyle = '#6b4423';
+  for (let x = 8; x < hw; x += 28 * S) c.fillRect(x, deckY, 7 * S, 56 * S);
+  c.fillStyle = '#b07a45'; c.fillRect(0, deckY - 8 * S, hw, 10 * S);
+  c.fillStyle = '#8a5a2b'; for (let x = 0; x < hw; x += 16 * S) c.fillRect(x, deckY - 8 * S, 1.5, 10 * S);
+  // Fischmarkt
+  const m = market(), bw = hw * .78, bh = 46 * S, bx = m.x - bw / 2, by = deckY - 8 * S - bh;
+  c.fillStyle = '#fff1d0'; c.fillRect(bx, by, bw, bh);
+  c.fillStyle = '#6b4423'; c.fillRect(bx + bw * .3, by + bh * .45, bw * .4, bh * .55);
+  c.fillStyle = '#ffe8a3'; c.fillRect(bx + bw * .32, by + bh * .5, bw * .36, bh * .25);
+  const aw = bw + 10 * S, ah = 16 * S, ax = bx - 5 * S, ay = by - 2 * S;
+  const stripes = 6;
+  for (let i = 0; i < stripes; i++) {
+    c.fillStyle = i % 2 ? '#fff' : '#fa5252';
+    c.beginPath(); c.moveTo(ax + aw * i / stripes, ay); c.lineTo(ax + aw * (i + 1) / stripes, ay);
+    c.lineTo(ax + aw * (i + 1) / stripes, ay + ah * .7); c.arc(ax + aw * (i + .5) / stripes, ay + ah * .7, aw / stripes / 2, 0, Math.PI); c.closePath(); c.fill();
+  }
+  c.fillStyle = '#c92a2a'; c.beginPath(); c.moveTo(ax - 2, ay); c.lineTo(m.x, ay - 22 * S); c.lineTo(ax + aw + 2, ay); c.fill();
+  drawCoin(c, m.x, ay - 30 * S, 13 * S, .2);
+  c.fillStyle = '#4dabf7'; c.fillRect(bx + 6 * S, deckY - 18 * S, 12 * S, 10 * S);
+  c.fillStyle = '#c98b4f'; c.fillRect(bx + bw - 16 * S, deckY - 20 * S, 14 * S, 12 * S);
+}
+function drawPulse(c, x, y, label) {
+  const k = (T * 1.4) % 1;
+  c.strokeStyle = `rgba(255,224,102,${1 - k})`; c.lineWidth = 4 * S; circ(c, x, y, (26 + k * 22) * S); c.stroke();
+  c.strokeStyle = '#ffe066'; c.lineWidth = 3 * S; circ(c, x, y, 26 * S); c.stroke();
+  c.font = `${20 * S}px 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif`; c.textAlign = 'center';
+  const ty = y - 40 * S + Math.sin(T * 4) * 3;
+  c.lineWidth = 5; c.strokeStyle = '#173451'; c.strokeText(label, clamp(x, 80, W - 80), ty); c.fillStyle = '#fff'; c.fillText(label, clamp(x, 80, W - 80), ty);
+}
+function drawArrowToHarbor(c, P) {
+  const x = P.x - boatW() * .5 - 30 * S - Math.abs(Math.sin(T * 5)) * 12 * S, y = G.seaY - 60 * S;
+  if (x > G.harborW + 10) {
+    c.save(); c.translate(x, y);
+    c.beginPath(); c.moveTo(-26 * S, 0); c.lineTo(0, -20 * S); c.lineTo(0, -9 * S); c.lineTo(28 * S, -9 * S); c.lineTo(28 * S, 9 * S); c.lineTo(0, 9 * S); c.lineTo(0, 20 * S); c.closePath();
+    c.fillStyle = '#ffd43b'; c.fill(); c.lineWidth = 4 * S; c.strokeStyle = '#fff'; c.stroke();
+    c.restore();
+  }
+  const m = market(); drawPulse(c, m.x, m.y, 'Verkaufen!');
+}
+function drawBubble(c, text, P) {
+  c.font = `800 ${Math.round(17 * S)}px Nunito, system-ui, sans-serif`;
+  const maxW = Math.min(W - 48, 300 * S), lines = wrap(c, text, maxW), lh = 22 * S;
+  const bw = Math.max(...lines.map(l => c.measureText(l).width)) + 28, bh = lines.length * lh + 18;
+  const hudB = $('.hud').getBoundingClientRect().bottom - cv.getBoundingClientRect().top;
+  let bx = clamp(P.x - bw / 2, 16, W - bw - 16);
+  let by = Math.max(hudB + 8, P.y - 110 * S - bh);
+  const a = clamp(hint.t * 3, 0, 1);
+  c.globalAlpha = a;
+  c.fillStyle = '#fff'; rr(c, bx, by, bw, bh, 14); c.fill();
+  c.beginPath(); c.moveTo(clamp(P.x, bx + 20, bx + bw - 20) - 9, by + bh - 1); c.lineTo(clamp(P.x, bx + 20, bx + bw - 20), by + bh + 12); c.lineTo(clamp(P.x, bx + 20, bx + bw - 20) + 9, by + bh - 1); c.fill();
+  c.fillStyle = '#173451'; c.textAlign = 'center'; c.textBaseline = 'top';
+  lines.forEach((l, i) => c.fillText(l, bx + bw / 2, by + 9 + i * lh));
+  c.textBaseline = 'alphabetic'; c.globalAlpha = 1;
+}
+function wrap(c, text, maxW) {
+  const out = []; let cur = '';
+  for (const w of text.split(' ')) { const t = cur ? cur + ' ' + w : w; if (c.measureText(t).width > maxW && cur) { out.push(cur); cur = w; } else cur = t; }
+  if (cur) out.push(cur); return out;
+}
+
+/* ---------- HUD & Werft ---------- */
+const coinNum = $('#coinNum');
+function bumpCoins() { const el = $('#coins'); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+function mini(w, h, draw) {
+  const d = Math.min(2, window.devicePixelRatio || 1), cn = document.createElement('canvas');
+  cn.width = w * d; cn.height = h * d; const c = cn.getContext('2d'); c.scale(d, d); draw(c); return cn;
+}
+function fishIcon(type, w, h, silhouette) {
+  return mini(w, h, c => {
+    const L = Math.min(w * .62, h * 1.1);
+    c.save(); c.translate(w / 2 + (type === 'chest' ? 0 : L * .08), h / 2 + (type === 'chest' ? h * .28 : type === 'octo' ? -h * .02 : 0));
+    drawFishShape(c, type, type === 'chest' ? L * .9 : type === 'octo' ? L * .75 : L, 1);
+    c.restore();
+    if (silhouette) { c.globalCompositeOperation = 'source-in'; c.fillStyle = '#7e9ab3'; c.fillRect(0, 0, w, h); }
+  });
+}
+function renderCrate() {
+  const el = $('#crate'); el.innerHTML = '';
+  const n = cap();
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div'); s.className = 'slot' + (crate[i] ? ' full' : '');
+    if (crate[i]) s.appendChild(fishIcon(crate[i], 32, 24));
+    el.appendChild(s);
+  }
+  el.classList.toggle('full', crate.length >= n);
+  el.setAttribute('aria-label', `Fischkiste: ${crate.length} von ${n}`);
+}
+function anyAffordable() {
+  return Object.keys(UP).some(k => save.lv[k] < UP[k].vals.length - 1 && save.coins >= UP[k].price[save.lv[k]]);
+}
+function updateHud() {
+  $('#shopBtn').classList.toggle('glow', anyAffordable());
+  $('#walletNum').textContent = save.coins;
+  if (!$('#shop').hidden) renderShop();
+}
+function drawShopIcon() {
+  const cn = $('#shopIco'), c = cn.getContext('2d');
+  c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, 56, 34);
+  // Anker
+  c.strokeStyle = '#173451'; c.lineWidth = 3.2; c.lineCap = 'round';
+  c.beginPath(); c.arc(28, 6.5, 3.5, 0, TAU); c.stroke();
+  c.beginPath(); c.moveTo(28, 10); c.lineTo(28, 30); c.stroke();
+  c.beginPath(); c.moveTo(21, 15); c.lineTo(35, 15); c.stroke();
+  c.beginPath(); c.arc(28, 19, 11, .35, Math.PI - .35); c.stroke();
+}
+function upgradeIcon(key, lvl) {
+  return mini(120, 84, c => {
+    if (key === 'boat') {
+      const s = Math.min(1, 100 / (BOATS[lvl].w + 30));
+      c.fillStyle = '#a5d8ff'; rr(c, 4, 60, 112, 22, 10); c.fill();
+      c.save(); c.translate(56, 64); drawBoat(c, lvl, s, 1, ['sardine', 'blue']); c.restore();
+    } else if (key === 'line') {
+      c.fillStyle = '#d0ebff'; rr(c, 6, 10, 108, 70, 12); c.fill();
+      const depth = 22 + lvl * 13;
+      c.fillStyle = '#4dabf7'; c.fillRect(6, 22, 108, 58 - 0);
+      c.fillStyle = 'rgba(10,44,78,.35)'; c.fillRect(6, 22 + depth + 8, 108, Math.max(0, 50 - depth));
+      c.strokeStyle = '#5c3d1e'; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); c.moveTo(20, 18); c.quadraticCurveTo(50, 2, 74, 10); c.stroke();
+      c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(74, 10); c.lineTo(74, 22 + depth); c.stroke();
+      c.strokeStyle = '#495057'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(74, 22 + depth); c.lineTo(74, 28 + depth); c.arc(70, 28 + depth, 4, 0, Math.PI * .9); c.stroke();
+      c.save(); c.translate(40, 30 + depth * .9); drawFishShape(c, ['blue', 'stripe', 'tuna', 'angler'][lvl], 26, 1); c.restore();
+    } else if (key === 'motor') {
+      c.save(); c.translate(60, 42);
+      for (let i = 0; i < 3; i++) { c.rotate(TAU / 3); c.fillStyle = lvl >= 3 ? '#fcc419' : '#adb5bd'; ell(c, 0, -17, 10, 19); c.fill(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = 2; c.stroke(); }
+      c.fillStyle = '#495057'; circ(c, 0, 0, 9); c.fill();
+      c.restore();
+      c.strokeStyle = '#4dabf7'; c.lineWidth = 3; c.lineCap = 'round';
+      for (let i = 0; i < Math.min(lvl + 1, 4); i++) { c.beginPath(); c.moveTo(6 + i * 3, 26 + i * 12); c.lineTo(22 + i * 3, 26 + i * 12); c.stroke(); }
+    } else {
+      c.strokeStyle = '#f783ac'; c.lineWidth = 9; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(30, 52); c.bezierCurveTo(42, 22, 58, 70, 72, 40); c.quadraticCurveTo(78, 28, 88, 34); c.stroke();
+      c.strokeStyle = '#e64980'; c.lineWidth = 1.5;
+      for (const t of [.25, .45, .65]) { const x = 30 + t * 58; c.beginPath(); c.moveTo(x, 34 + t * 10); c.lineTo(x + 2, 48 + t * 4); c.stroke(); }
+      c.fillStyle = '#173451'; circ(c, 88, 32, 1.8); c.fill();
+      for (let i = 0; i < lvl + 1; i++) { c.save(); c.translate(20 + i * 26, 72); drawFishShape(c, 'sardine', 18, i); c.restore(); }
+      c.fillStyle = '#ffe066'; star(c, 98, 18, 7, .3); star(c, 18, 22, 5, .8);
+    }
+  });
+}
+function renderShop() {
+  $('#walletNum').textContent = save.coins;
+  const cards = $('#cards'); cards.innerHTML = '';
+  for (const key of ['boat', 'line', 'motor', 'bait']) {
+    const u = UP[key], lv = save.lv[key], max = u.vals.length - 1, isMax = lv >= max, price = isMax ? 0 : u.price[lv];
+    const card = document.createElement('div'); card.className = 'card';
+    card.appendChild(upgradeIcon(key, Math.min(lv + 1, max)));
+    const h = document.createElement('h3'); h.textContent = u.name; card.appendChild(h);
+    const p = document.createElement('p'); p.textContent = u.desc; card.appendChild(p);
+    const pips = document.createElement('div'); pips.className = 'pips';
+    for (let i = 1; i <= max; i++) { const d = document.createElement('span'); d.className = 'pip' + (i <= lv ? ' on' : ''); pips.appendChild(d); }
+    card.appendChild(pips);
+    const b = document.createElement('button'); b.className = 'buy' + (isMax ? ' done' : save.coins < price ? ' poor' : '');
+    if (isMax) b.textContent = 'Fertig!';
+    else { b.innerHTML = `<span class="coin sm"></span>${price}`; b.setAttribute('aria-label', `${u.name} kaufen für ${price} Münzen`); }
+    b.addEventListener('click', () => buy(key, card));
+    card.appendChild(b);
+    cards.appendChild(card);
+  }
+  const row = $('#albumRow'); row.innerHTML = '';
+  for (const k of ORDER) {
+    const got = !!save.album[k], d = document.createElement('div'); d.className = 'af' + (got ? ' got' : '');
+    d.appendChild(fishIcon(k, 72, 46, !got));
+    const b = document.createElement('b'); b.textContent = got ? FT[k].name : '?'; d.appendChild(b);
+    const v = document.createElement('span'); v.textContent = got ? `${FT[k].value} ${FT[k].value === 1 ? 'Münze' : 'Münzen'}` : ''; d.appendChild(v);
+    row.appendChild(d);
+  }
+}
+function buy(key, card) {
+  ensureAudio();
+  const u = UP[key], lv = save.lv[key];
+  if (lv >= u.vals.length - 1) return;
+  const p = u.price[lv];
+  if (save.coins < p) {
+    sfx.nope(); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    const miss = p - save.coins;
+    say(miss === 1 ? 'Dafür brauchst du noch eine Münze.' : `Dafür brauchst du noch ${miss} Münzen.`);
+    return;
+  }
+  save.coins -= p; dispCoins = save.coins; save.lv[key]++;
+  crate = crate.slice(0, cap());
+  boat.x = clamp(boat.x, minBoatX(), maxBoatX()); boat.tx = clamp(boat.tx, minBoatX(), maxBoatX());
+  persist(); sfx.buy(); say('Super! ' + u.said);
+  renderShop(); renderCrate(); updateHud();
+  const fresh = $('#cards').children[['boat', 'line', 'motor', 'bait'].indexOf(key)];
+  fresh.classList.add('pop');
+  const cols = ['#ff6b4a', '#ffd43b', '#4dabf7', '#69db7c', '#f783ac'];
+  for (let i = 0; i < 22; i++) {
+    const s = document.createElement('span'); s.className = 'confetti';
+    s.style.background = cols[i % cols.length];
+    s.style.setProperty('--dx', rand(-120, 120) + 'px'); s.style.setProperty('--dy', rand(-130, 60) + 'px'); s.style.setProperty('--r', rand(-400, 400) + 'deg');
+    fresh.appendChild(s); setTimeout(() => s.remove(), 1000);
+  }
+}
+function openShop() { ensureAudio(); renderShop(); $('#shop').hidden = false; $('#closeShop').focus(); }
+function closeShop() { $('#shop').hidden = true; resetArmed = false; $('#resetBtn').classList.remove('armed'); $('#resetBtn').textContent = 'Neues Spiel'; }
+$('#shopBtn').addEventListener('click', openShop);
+$('#closeShop').addEventListener('click', closeShop);
+$('#shop').addEventListener('click', e => { if (e.target.id === 'shop') closeShop(); });
+let resetArmed = false;
+$('#resetBtn').addEventListener('click', () => {
+  const b = $('#resetBtn');
+  if (!resetArmed) { resetArmed = true; b.classList.add('armed'); b.textContent = 'Wirklich alles löschen? Nochmal tippen'; return; }
+  save = fresh(); crate = []; dispCoins = 0; persist(); populate();
+  hook.st = 'idle'; hook.fish = hook.carry = null; sell.active = false;
+  boat.x = boat.tx = minBoatX() + 80;
+  closeShop(); renderCrate(); updateHud();
+});
+const SPK_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="#173451" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#173451"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const SPK_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="#173451" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#173451"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+function renderSound() { const b = $('#soundBtn'); b.innerHTML = soundOn ? SPK_ON : SPK_OFF; b.setAttribute('aria-label', soundOn ? 'Ton aus' : 'Ton an'); }
+$('#soundBtn').addEventListener('click', () => {
+  soundOn = !soundOn; renderSound(); ensureAudio();
+  if (!soundOn) { try { speechSynthesis.cancel(); } catch (e) {} }
+  try { localStorage.setItem(KEY + '-sound', soundOn ? '1' : '0'); } catch (e) {}
+});
+function startGame() {
+  ensureAudio(); $('#start').hidden = true; sfx.buy();
+  say(save.caught ? 'Willkommen zurück, Kapitän Leo!' : 'Ahoi Kapitän Leo! Tippe auf einen Fisch.');
+}
+$('#playBtn').addEventListener('click', startGame);
+
+/* Tastatur: ← → fahren, Leertaste/↓ angeln, ↑/H Hafen, W Werft, 1–4 kaufen, M Ton */
+document.addEventListener('keydown', e => {
+  const k = e.key, shopOpen = !$('#shop').hidden, onButton = e.target && e.target.tagName === 'BUTTON';
+  if (!$('#start').hidden) {
+    if ((k === 'Enter' || k === ' ') && !e.repeat) { e.preventDefault(); startGame(); }
+    return;
+  }
+  if (k === 'm' || k === 'M') { if (!e.repeat) $('#soundBtn').click(); return; }
+  if (shopOpen) {
+    if (k === 'Escape' || k === 'w' || k === 'W') { e.preventDefault(); closeShop(); $('#shopBtn').focus(); }
+    else if (/^[1-4]$/.test(k) && !e.repeat) { const key = ['boat', 'line', 'motor', 'bait'][+k - 1]; buy(key, $('#cards').children[+k - 1]); }
+    return;
+  }
+  ensureAudio();
+  if (k === 'ArrowLeft' || k === 'a' || k === 'A') { e.preventDefault(); keys.left = true; }
+  else if (k === 'ArrowRight' || k === 'd' || k === 'D') { e.preventDefault(); keys.right = true; }
+  else if (k === ' ' || k === 'ArrowDown' || k === 's' || k === 'S') {
+    if (onButton && k === ' ') return;
+    e.preventDefault(); if (!e.repeat) castNearest();
+  }
+  else if (k === 'ArrowUp' || k === 'h' || k === 'H') { e.preventDefault(); if (!e.repeat) goSell(); }
+  else if (k === 'w' || k === 'W') { e.preventDefault(); openShop(); }
+});
+document.addEventListener('keyup', e => {
+  const k = e.key;
+  if (k === 'ArrowLeft' || k === 'a' || k === 'A') keys.left = false;
+  else if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.right = false;
+  else return;
+  if (!keys.left && !keys.right && hook.st === 'idle' && !sell.active) boat.tx = boat.x;
+});
+window.addEventListener('blur', () => { keys.left = keys.right = false; });
+
+/* ---------- Start ---------- */
+let last = 0;
+function frame(ts) {
+  const dt = Math.min(.05, (ts - last) / 1000 || 0); last = ts;
+  update(dt); render();
+  requestAnimationFrame(frame);
+}
+function start(data) {
+  load(data && data.save ? data : null);
+  try { soundOn = localStorage.getItem(KEY + '-sound') !== '0'; } catch (e) {}
+  dispCoins = save.coins;
+  resize(); populate();
+  boat.x = boat.tx = clamp(G.harborW + 160 * S, minBoatX(), maxBoatX());
+  renderCrate(); renderSound(); drawShopIcon(); updateHud();
+  coinNum.textContent = save.coins;
+  window.addEventListener('resize', resize);
+  try { window.claude?.hot?.snapshot?.(() => ({ save: JSON.parse(JSON.stringify(save)), crate: crate.slice() })); } catch (e) {}
+  requestAnimationFrame(frame);
+}
+if (window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+</html>
