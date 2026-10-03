@@ -397,7 +397,54 @@ function syncToggles(){ $("t-speak").setAttribute("aria-pressed",speakOn); $("t-
 let deVoice = null;
 function pickVoice(){ try{ const vs = speechSynthesis.getVoices(); deVoice = vs.find(v=>/^de/i.test(v.lang)) || null; }catch(e){} }
 try{ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }catch(e){}
-function speak(text){
+/* ---------- Stimmen: Seraphina erzählt (n), Gisela spricht die Katzen (k) und die Babyvampire (v) ----------
+   Aufnahmen (Azure) liegen in ellas-audio/, beschrieben in manifest.json. Fehlt eine, liest die Browserstimme. */
+const N = t => ({v:"n", t}), K = t => ({v:"k", t}), V = t => ({v:"v", t});
+const CAT_SAYS = {
+  kratzer:"Miau! Kratz, kratz!", tatze:"Hau ruck, Tatze!", fisch:"Fang den Fisch!", wolle:"Wollknäuel, los!",
+  mond:"Mondlicht, leuchte!", regenbogen:"Huiii, Regenbogen!", schnurren:"Schnurr, schnurr.", milch:"Mmmh, lecker Milch!",
+  kuscheln:"Kuschelschild an!", schlaflied:"Schlaf schön, kleiner Vampir.", fauchen:"Fffffauch!",
+};
+const CAT_LINES = { pick:"Miau! Ich bin dabei!", tired:"Ich bin so müde. Gute Nacht!", win:"Miau! Wir haben es geschafft!" };
+const vkey = t => { let h = 0x811c9dc5; for (const ch of t) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return "v" + h.toString(16).padStart(8, "0"); };
+const clipKey = p => vkey(p.v + "|" + p.t);
+let vctx = null, clipSet = null, vseq = 0, vsrc = [], lastParts = [];
+const clipBufs = {};
+fetch("ellas-audio/manifest.json").then(r => r.ok ? r.json() : null).then(a => { if (Array.isArray(a)) clipSet = new Set(a); }).catch(() => {});
+function voiceCtx(){
+  if(!vctx){ try{ vctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(vctx && vctx.state === "suspended") vctx.resume().catch(()=>{});
+  return vctx;
+}
+["pointerdown","keydown"].forEach(ev => document.addEventListener(ev, voiceCtx, {capture:true, passive:true}));
+function loadClip(k){
+  if(!clipBufs[k]){
+    clipBufs[k] = fetch("ellas-audio/" + k + ".mp3").then(r => { if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(ab => new Promise((res, rej) => vctx.decodeAudioData(ab, res, rej)));
+    clipBufs[k].catch(() => { delete clipBufs[k]; });
+  }
+  return clipBufs[k];
+}
+function stopVoice(){ vseq++; vsrc.forEach(s => { try{ s.stop(); }catch(e){} }); vsrc = []; try{ speechSynthesis.cancel(); }catch(e){} }
+async function speakParts(parts){
+  lastParts = parts;
+  if(!speakOn) return;
+  stopVoice(); const my = vseq, ctx = voiceCtx();
+  if(ctx && clipSet && parts.every(p => clipSet.has(clipKey(p)))){
+    try{
+      const bs = await Promise.all(parts.map(p => loadClip(clipKey(p))));
+      if(my !== vseq) return;
+      let t = ctx.currentTime + .05;
+      bs.forEach(b => { const s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(t); vsrc.push(s); t += b.duration + .15; });
+      return;
+    }catch(e){}
+  }
+  if(my !== vseq) return;
+  if(clipSet) parts.filter(p => !clipSet.has(clipKey(p))).forEach(p => console.info("Keine Aufnahme:", p.v, p.t));
+  speakTTS(parts.map(p => p.t).join(" "));
+}
+function speak(text){ speakParts([N(text)]); }
+function speakTTS(text){
   if(!speakOn) return;
   try{
     speechSynthesis.cancel();
@@ -435,7 +482,7 @@ const SFX = {
 let S = null;
 function newRun(catId){
   const c = CATS.find(x=>x.id===catId);
-  S = { catId, maxHp:20, hp:20, skills:c.skills.map(id=>({id,lvl:1})), stage:0, loop:0, screen:"battle" };
+  S = { catId, maxHp:20, hp:20, skills:c.skills.map(id=>({id,lvl:1})), stage:0, loop:0, screen:"battle", fresh:true };
   startFight();
 }
 function enemyFor(stage, loop){
@@ -480,7 +527,8 @@ function startFight(){
   $("round-label").textContent = `Kampf ${S.stage+1} von ${VAMPS.length}` + (S.loop?` · Runde ${S.loop+1}`:"");
   updateBars(); renderSkills();
   show("s-battle");
-  say(`${S.enemy.name} kommt angeflattert! Was macht ${catDef().name}?`);
+  const intro = `${S.enemy.name} kommt angeflattert! Was macht ${catDef().name}?`;
+  say(intro, S.fresh ? [K(CAT_LINES.pick), N(intro)] : [N(intro)]); S.fresh = false;
 }
 function drawCat(mood){ $("c-svg").innerHTML = catSVG(catDef(), mood || (S.hp<=0?"sleep":"happy")); }
 function drawVamp(mood){ $("e-svg").innerHTML = vampSVG(S.enemy, mood || (S.enemy.asleep?"sleep":"happy")) + (S.enemy.asleep?`<span class="zzz">Zzz</span>`:""); }
@@ -494,7 +542,7 @@ function updateBars(){
   $("e-badges").innerHTML = eb.join("");
 }
 let lastMsg="";
-function say(t){ lastMsg=t; $("msg").textContent=t; speak(t); }
+function say(t, parts){ lastMsg=t; $("msg").textContent=t; speakParts(parts || [N(t)]); }
 
 function skillValue(id,lvl){
   const up = lvl-1;
@@ -562,18 +610,20 @@ async function playerTurn(i){
   const sk=S.skills[i], s=SKILLS[sk.id], v=skillValue(sk.id,sk.lvl), cn=catDef().name, e=S.enemy;
   if(s.kind!=="heal" && s.kind!=="shield") anim($("c-svg"),"lunge-r");
   let line = `${cn} macht ${s.name}!`;
+  const parts = [K(CAT_SAYS[sk.id]), N(line)];
+  const add = t => { line += " " + t; parts.push(N(t)); };
   if(v.dmg){
-    if(v.hits){ for(let h=0;h<v.hits;h++){ await hitEnemy(v.dmg); await wait(150);} line+=` Zweimal getroffen!`; }
+    if(v.hits){ for(let h=0;h<v.hits;h++){ await hitEnemy(v.dmg); await wait(150);} add(`Zweimal getroffen!`); }
     else { await wait(200); await hitEnemy(v.dmg); }
   }
-  if(v.heal){ const g=healCat(v.heal); if(!v.dmg && !v.shield) line+=` ${cn} fühlt sich viel besser.`; }
-  if(v.shield){ S.shield=true; SFX.shield(); line+=` Ein weiches Kuschelschild schützt ${cn}.`; updateBars(); }
-  if(v.weak){ e.weak+=1; line+=` ${e.name} erschrickt und wird schwächer.`; updateBars(); }
+  if(v.heal){ const g=healCat(v.heal); if(!v.dmg && !v.shield) add(`${cn} fühlt sich viel besser.`); }
+  if(v.shield){ S.shield=true; SFX.shield(); add(`Ein weiches Kuschelschild schützt ${cn}.`); updateBars(); }
+  if(v.weak){ e.weak+=1; add(`${e.name} erschrickt und wird schwächer.`); updateBars(); }
   if(v.sleep && e.hp>0){
-    if(e.sleptLast){ line+=` Aber ${e.name} ist noch hellwach.`; }
-    else { e.asleep=true; SFX.sleep(); line+=` ${e.name} gähnt und schläft ein.`; drawVamp(); updateBars(); }
+    if(e.sleptLast){ add(`Aber ${e.name} ist noch hellwach.`); }
+    else { e.asleep=true; SFX.sleep(); add(`${e.name} gähnt und schläft ein.`); drawVamp(); updateBars(); }
   }
-  say(line);
+  say(line, parts);
   await wait(1500);
   if(e.hp<=0){ return enemyLoses(); }
   await enemyTurn();
@@ -614,7 +664,8 @@ async function enemyTurn(){
 async function enemyLoses(){
   const e=S.enemy;
   drawVamp("cry"); $("e-svg").className=""; SFX.cry();
-  say(`${e.name} weint: ${CRY[rnd(CRY.length)]}`);
+  const cry = CRY[rnd(CRY.length)];
+  say(`${e.name} weint: ${cry}`, [N(`${e.name} weint:`), V(cry)]);
   await wait(2600);
   $("f-vamp").classList.add("leave-r");
   await wait(2300);
@@ -628,13 +679,14 @@ async function enemyLoses(){
 async function catLoses(){
   const cn=catDef().name;
   drawCat("sleep"); $("c-svg").className="";
-  say(`${cn} ist ganz müde und geht nach Hause zum Kuscheln.`);
+  const tired = `${cn} ist ganz müde und geht nach Hause zum Kuscheln.`;
+  say(tired, [N(tired), K(CAT_LINES.tired)]);
   await wait(2200);
   $("f-cat").classList.add("leave-l");
   await wait(2400);
   S.screen="home";
   $("h-title").textContent=`${cn} ist zu Hause`;
-  $("h-note").textContent=`${cn} hat ${S.stage} Babyvampire nach Hause geschickt. Jetzt macht ${cn} ein Schläfchen. Willst du nochmal von vorn anfangen?`;
+  $("h-note").textContent=`${cn} hat ${S.stage===0?"noch keinen Babyvampir":S.stage===1?"einen Babyvampir":S.stage+" Babyvampire"} nach Hause geschickt. Jetzt macht ${cn} ein Schläfchen. Willst du nochmal von vorn anfangen?`;
   show("s-home");
   speak($("h-note").textContent);
 }
@@ -644,7 +696,7 @@ function showReward(){
   S.screen="reward";
   const cn=catDef().name;
   $("r-svg").innerHTML=catSVG(catDef());
-  $("r-note").textContent=`${cn} ist gewachsen und ist ein bisschen gewachsen. Such dir ein Geschenk aus!`;
+  $("r-note").textContent=`${cn} ist ein bisschen stärker geworden. Such dir ein Geschenk aus!`;
   $("r-life").textContent=`❤️ Leben: ${S.hp} von ${S.maxHp}. Die Leben bleiben für den nächsten Kampf.`;
   const ups=S.skills.filter(s=>s.lvl<5).map(s=>({type:"up",id:s.id,lvl:s.lvl}));
   const owned=new Set(S.skills.map(s=>s.id));
@@ -677,7 +729,8 @@ function showReward(){
     startFight();
   });
   show("s-reward");
-  speak(`Super gemacht! Such dir ein Geschenk aus. ` + opts.map(o=>o.type==="hp"?"Mehr Leben":o.type==="rest"?"Picknick":(o.type==="up"?SKILLS[o.id].name+" stärker machen":SKILLS[o.id].name+" neu lernen")).join(", oder ")+".");
+  const optName = o => o.type==="hp"?"Mehr Leben":o.type==="rest"?"Picknick":(o.type==="up"?SKILLS[o.id].name+" stärker machen":SKILLS[o.id].name+" neu lernen");
+  speakParts([N("Super gemacht! Such dir ein Geschenk aus."), ...opts.map((o,i)=>N((i?"oder ":"")+optName(o)))]);
 }
 
 function showWin(){
@@ -686,7 +739,7 @@ function showWin(){
   $("w-svg").innerHTML=catSVG(catDef());
   $("w-note").textContent=`${cn} hat sogar die Königin Mitternacht nach Hause geschickt. Jetzt ist die Nacht ruhig und alle schlafen. Die Vampire kommen aber bestimmt wieder, ein bisschen stärker!`;
   show("s-win");
-  speak(`Hurra! Alle Babyvampire sind bei Mama! ${$("w-note").textContent}`);
+  speakParts([K(CAT_LINES.win), N("Hurra! Alle Babyvampire sind bei Mama!"), N($("w-note").textContent)]);
 }
 
 /* ---------- wiring ---------- */
@@ -695,8 +748,8 @@ $("b-retry").onclick=()=>{ SFX.tap(); newRun(S.catId); };
 $("b-other").onclick=()=>{ SFX.tap(); renderChoose(); };
 $("b-more").onclick=()=>{ SFX.tap(); S.loop++; S.stage=0; S.maxHp+=5; S.hp=Math.min(S.maxHp,S.hp+5); startFight(); };
 $("b-new").onclick=()=>{ SFX.tap(); renderChoose(); };
-$("b-say").onclick=()=>{ const was=speakOn; speakOn=true; speak(lastMsg); speakOn=was; };
-$("t-speak").onclick=()=>{ speakOn=!speakOn; if(!speakOn) try{speechSynthesis.cancel()}catch(e){} syncToggles(); savePrefs(); };
+$("b-say").onclick=()=>{ const was=speakOn; speakOn=true; speakParts(lastParts.length?lastParts:[N(lastMsg)]); speakOn=was; };
+$("t-speak").onclick=()=>{ speakOn=!speakOn; if(!speakOn) stopVoice(); syncToggles(); savePrefs(); };
 $("t-sound").onclick=()=>{ soundOn=!soundOn; syncToggles(); savePrefs(); };
 syncToggles();
 

@@ -1,0 +1,6 @@
+# API-Schlüssel nie einchecken
+*.key
+.env
+# Hörproben sind nur zum Aussuchen gedacht
+werkzeuge/**/proben/
+werkzeuge/**/*.mp3
