@@ -425,33 +425,59 @@ function loadClip(k){
   }
   return clipBufs[k];
 }
-function stopVoice(){ vseq++; vsrc.forEach(s => { try{ s.stop(); }catch(e){} }); vsrc = []; try{ speechSynthesis.cancel(); }catch(e){} }
-async function speakParts(parts){
+/* Ansagen laufen nacheinander und werden nicht abgeschnitten: neue Sätze stellen sich hinten an.
+   Nur ein Bildschirmwechsel oder "Vorlesen aus" bricht ab (interrupt). Das Spiel wartet mit speechDone() auf das Ende. */
+let vchain = Promise.resolve(), voiceEnd = 0, ttsBusy = null;
+function stopVoice(){ vseq++; vsrc.forEach(s => { try{ s.stop(); }catch(e){} }); vsrc = []; voiceEnd = 0; vchain = Promise.resolve(); try{ speechSynthesis.cancel(); }catch(e){} }
+function speakParts(parts, interrupt = false){
   lastParts = parts;
-  if(!speakOn) return;
-  stopVoice(); const my = vseq, ctx = voiceCtx();
-  if(ctx && clipSet && parts.every(p => clipSet.has(clipKey(p)))){
+  if(!speakOn) return Promise.resolve();
+  if(interrupt) stopVoice();
+  const my = vseq;
+  vchain = vchain.then(() => playParts(parts, my)).catch(() => {});
+  return vchain;
+}
+async function playParts(parts, my){
+  if(my !== vseq) return;
+  const ctx = voiceCtx();
+  if(ctx && ctx.state !== "running"){ try{ await Promise.race([ctx.resume(), wait(400)]); }catch(e){} }
+  if(ctx && ctx.state === "running" && clipSet && parts.every(p => clipSet.has(clipKey(p)))){
     try{
       const bs = await Promise.all(parts.map(p => loadClip(clipKey(p))));
       if(my !== vseq) return;
-      let t = ctx.currentTime + .05;
+      let t = Math.max(ctx.currentTime + .05, voiceEnd);
       bs.forEach(b => { const s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(t); vsrc.push(s); t += b.duration + .15; });
+      voiceEnd = t;
       return;
     }catch(e){}
   }
   if(my !== vseq) return;
   if(clipSet) parts.filter(p => !clipSet.has(clipKey(p))).forEach(p => console.info("Keine Aufnahme:", p.v, p.t));
-  speakTTS(parts.map(p => p.t).join(" "));
+  await speechDone();
+  if(my === vseq) await speakTTS(parts.map(p => p.t).join(" "));
 }
-function speak(text){ speakParts([N(text)]); }
+// wartet, bis alle angestellten Ansagen fertig gesprochen sind (höchstens 12 s, damit das Spiel nie hängt)
+async function speechDone(){
+  const all = (async () => {
+    await vchain;
+    if(ttsBusy) await ttsBusy;
+    if(vctx && vctx.state === "running" && voiceEnd > vctx.currentTime) await wait((voiceEnd - vctx.currentTime) * 1000);
+  })();
+  await Promise.race([all, wait(12000)]);
+}
+function speak(text, interrupt = false){ return speakParts([N(text)], interrupt); }
 function speakTTS(text){
-  if(!speakOn) return;
-  try{
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[^\p{L}\p{N}\s.,!?'-]/gu,""));
-    u.lang="de-DE"; if(deVoice) u.voice=deVoice; u.rate=.95; u.pitch=1.25;
-    speechSynthesis.speak(u);
-  }catch(e){}
+  if(!speakOn || !("speechSynthesis" in window)) return Promise.resolve();
+  ttsBusy = new Promise(res => {
+    try{
+      const u = new SpeechSynthesisUtterance(text.replace(/[^\p{L}\p{N}\s.,!?'-]/gu,""));
+      u.lang="de-DE"; if(deVoice) u.voice=deVoice; u.rate=.95; u.pitch=1.25;
+      u.onend = u.onerror = () => res();
+      speechSynthesis.speak(u);
+      setTimeout(res, 1500 + text.length * 90);
+    }catch(e){ res(); }
+  }).then(() => { ttsBusy = null; });
+  return ttsBusy;
 }
 
 let actx=null;
@@ -510,7 +536,7 @@ function renderChoose(){
     </button>`).join("");
   $("cats").querySelectorAll(".cat-card").forEach(b=>b.onclick=()=>{ SFX.tap(); newRun(b.dataset.cat); });
   show("s-choose");
-  speak("Welche Babykatze bist du? Tippe auf eine Katze.");
+  speak("Welche Babykatze bist du? Tippe auf eine Katze.", true);
 }
 
 /* ---------- battle ---------- */
@@ -624,7 +650,7 @@ async function playerTurn(i){
     else { e.asleep=true; SFX.sleep(); add(`${e.name} gähnt und schläft ein.`); drawVamp(); updateBars(); }
   }
   say(line, parts);
-  await wait(1500);
+  await Promise.all([wait(1500), speechDone()]);
   if(e.hp<=0){ return enemyLoses(); }
   await enemyTurn();
 }
@@ -641,7 +667,7 @@ async function enemyTurn(){
   if(roll<0.2){
     anim($("e-svg"),"shake");
     say(`${e.name} macht eine Grimasse. Bäääh! Das tut gar nicht weh.`);
-    await wait(1200); setBusy(false); return;
+    await Promise.all([wait(1200), speechDone()]); setBusy(false); return;
   }
   const moves=["Zwicki-Biss","Fledermaus-Flattern","Umhang-Wirbel"];
   const mv=moves[rnd(moves.length)];
@@ -649,13 +675,13 @@ async function enemyTurn(){
   if(S.shield){
     S.shield=false; SFX.shield(); updateBars();
     say(`${e.name} versucht ${mv}. Aber das Kuschelschild hält! Nichts passiert.`);
-    await wait(1300); setBusy(false); return;
+    await Promise.all([wait(1300), speechDone()]); setBusy(false); return;
   }
   const dmg=Math.max(1, e.atk + rnd(2) - e.weak);
   S.hp=Math.max(0,S.hp-dmg);
   drawCat("hit"); anim($("c-svg"),"shake"); SFX.ouch(); floatText($("c-svg"),"-"+dmg,"#ffd0dc"); updateBars();
   say(`${e.name} macht ${mv}! Autsch!`);
-  await wait(1300);
+  await Promise.all([wait(1300), speechDone()]);
   if(S.hp<=0) return catLoses();
   drawCat(); setBusy(false);
   say(`Was macht ${cn} jetzt?`);
@@ -666,7 +692,7 @@ async function enemyLoses(){
   drawVamp("cry"); $("e-svg").className=""; SFX.cry();
   const cry = CRY[rnd(CRY.length)];
   say(`${e.name} weint: ${cry}`, [N(`${e.name} weint:`), V(cry)]);
-  await wait(2600);
+  await Promise.all([wait(2600), speechDone()]);
   $("f-vamp").classList.add("leave-r");
   await wait(2300);
   SFX.win();
@@ -681,7 +707,7 @@ async function catLoses(){
   drawCat("sleep"); $("c-svg").className="";
   const tired = `${cn} ist ganz müde und geht nach Hause zum Kuscheln.`;
   say(tired, [N(tired), K(CAT_LINES.tired)]);
-  await wait(2200);
+  await Promise.all([wait(2200), speechDone()]);
   $("f-cat").classList.add("leave-l");
   await wait(2400);
   S.screen="home";
@@ -748,7 +774,7 @@ $("b-retry").onclick=()=>{ SFX.tap(); newRun(S.catId); };
 $("b-other").onclick=()=>{ SFX.tap(); renderChoose(); };
 $("b-more").onclick=()=>{ SFX.tap(); S.loop++; S.stage=0; S.maxHp+=5; S.hp=Math.min(S.maxHp,S.hp+5); startFight(); };
 $("b-new").onclick=()=>{ SFX.tap(); renderChoose(); };
-$("b-say").onclick=()=>{ const was=speakOn; speakOn=true; speakParts(lastParts.length?lastParts:[N(lastMsg)]); speakOn=was; };
+$("b-say").onclick=()=>{ const was=speakOn; speakOn=true; speakParts(lastParts.length?lastParts:[N(lastMsg)], true); speakOn=was; };
 $("t-speak").onclick=()=>{ speakOn=!speakOn; if(!speakOn) stopVoice(); syncToggles(); savePrefs(); };
 $("t-sound").onclick=()=>{ soundOn=!soundOn; syncToggles(); savePrefs(); };
 syncToggles();

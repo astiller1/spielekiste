@@ -13,6 +13,8 @@ Live: https://astiller1.github.io/spielekiste/
 - **1.0** – Erste Veröffentlichung.
 
 ## Ellas Babykatzen gegen Babyvampire (`ellas-…`)
+- **1.2** – Ansagen laufen zu Ende: neue Sätze stellen sich hinten an, statt die laufende Ansage abzuschneiden.
+  Das Spiel wartet mit dem nächsten Schritt, bis fertig gesprochen ist (höchstens 12 Sekunden).
 - **1.1** – Echte Stimmen (Azure): Seraphina erzählt, Gisela spricht die Katzen und die Babyvampire.
   Katzen rufen bei jeder Fähigkeit etwas. Grammatik „einen Babyvampir“, Tippfehler im Belohnungstext.
 - **1.0** – Erste Veröffentlichung.
